@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-val ksPath: String? = System.getenv("ANDROID_KEYSTORE_PATH")
+val ksPath: String? = System.getenv("ANDROID_KEYSTORE_PATH")?.takeIf { it.isNotBlank() }
 
 android {
     namespace = "id.tirtawijata.crumina"
