@@ -1,7 +1,9 @@
 # Caddy auto-provisions + renews Let's Encrypt TLS for each hostname below.
 crumina.example.com {
     encode gzip zstd
-    reverse_proxy app:3000
+    reverse_proxy app:3000 {
+        header_up X-Real-IP {remote_host}
+    }
 }
 
 # Optional: also host the apex site on this same VPS (uncomment + provide files).

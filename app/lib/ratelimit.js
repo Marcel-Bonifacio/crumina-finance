@@ -3,8 +3,8 @@
 const hits = new Map();
 function rateLimit(req, res, opts) {
   const max = (opts && opts.max) || 20, windowMs = (opts && opts.windowMs) || 60000;
-  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()
-    || (req.socket && req.socket.remoteAddress) || 'unknown';
+  const xff = String(req.headers['x-forwarded-for'] || '').split(',').map(s => s.trim()).filter(Boolean);
+  const ip = req.headers['x-real-ip'] || xff[xff.length - 1] || (req.socket && req.socket.remoteAddress) || 'unknown';
   const now = Date.now(); const e = hits.get(ip);
   if (!e || now > e.reset) { if (hits.size > 5000) hits.clear(); hits.set(ip, { n: 1, reset: now + windowMs }); return true; }
   e.n++;
