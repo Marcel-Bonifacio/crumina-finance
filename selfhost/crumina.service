@@ -1,0 +1,16 @@
+[Unit]
+Description=Crumina (self-hosted Node server)
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/crumina
+EnvironmentFile=/opt/crumina/selfhost/.env
+ExecStart=/usr/bin/node selfhost/server.js
+Restart=always
+RestartSec=3
+User=crumina
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

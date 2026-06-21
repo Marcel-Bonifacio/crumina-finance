@@ -1,0 +1,18 @@
+{
+  "name": "crumina-app",
+  "version": "0.10.17",
+  "description": "Crumina \u2014 a privacy-first personal finance web app.",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node test/parse.test.js"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^4.10.38",
+    "imapflow": "^1.4.2",
+    "mailparser": "^3.9.11"
+  }
+}

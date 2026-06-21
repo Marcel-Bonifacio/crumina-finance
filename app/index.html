@@ -1,0 +1,188 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Crumina</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0A1B3D">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Crumina">
+<link rel="icon" type="image/svg+xml" href="/brand/crumina-icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--navy:#0A1B3D;--navy2:#16336E;--ink:#0A1B3D;--muted:#6B7A99;--bg:#EEF1F8;--card:#fff;--line:#E7EBF3;--teal:#16C7A8;--green:#13B97A;--red:#F0476A;--gold:#F6B73C;--ease:cubic-bezier(.32,.72,0,1);--shadow:0 1px 2px rgba(10,27,61,.05),0 16px 40px -12px rgba(10,27,61,.18);--shadow-sm:0 1px 2px rgba(10,27,61,.05),0 8px 22px -10px rgba(10,27,61,.13)}
+:root{--btnbg:#0A1B3D}
+[data-theme="dark"]{--navy:#E8EEFA;--ink:#E8EEFA;--muted:#9AA9C6;--bg:#0A0F1C;--card:#141E33;--line:#26324C;--btnbg:#2D5BD0;--shadow:0 1px 2px rgba(0,0,0,.4),0 18px 40px -12px rgba(0,0,0,.65);--shadow-sm:0 1px 2px rgba(0,0,0,.3),0 8px 22px -10px rgba(0,0,0,.5)}
+[data-theme="dark"] body{background-image:radial-gradient(1100px 520px at 88% -6%,rgba(22,199,168,.10),transparent 60%),radial-gradient(900px 500px at -8% 4%,rgba(45,91,208,.16),transparent 55%)}
+[data-theme="dark"] .badge{background:#3A2A12;color:#F6B73C}
+[data-theme="contrast"]{--navy:#000;--ink:#000;--muted:#33414F;--bg:#fff;--card:#fff;--line:#000;--teal:#005EA6;--green:#006B3C;--red:#C00000;--gold:#7A4F00;--btnbg:#000;--shadow:0 0 0 2px #000;--shadow-sm:0 0 0 1.5px #000}
+[data-theme="contrast"] body{background-image:none}
+[data-theme="contrast"] .card,[data-theme="contrast"] .btn.ghost,[data-theme="contrast"] .search{border:1.5px solid #000}
+[data-theme="dark"] .mnav{background:rgba(16,24,42,.82);box-shadow:0 12px 30px -8px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.08)}
+[data-theme="contrast"] .mnav{background:#fff;box-shadow:0 0 0 1.5px #000}
+[data-theme="contrast"] .mnav button.active{background:#000;color:#fff}
+*{box-sizing:border-box;margin:0;-webkit-font-smoothing:antialiased}
+body{font-family:'Plus Jakarta Sans',-apple-system,'Segoe UI',sans-serif;background:var(--bg);background-image:radial-gradient(1100px 520px at 88% -6%,rgba(22,199,168,.10),transparent 60%),radial-gradient(900px 500px at -8% 4%,rgba(22,51,110,.09),transparent 55%);color:var(--ink);min-height:100dvh;max-width:100%;letter-spacing:-.01em;-webkit-tap-highlight-color:transparent;animation:appfade .4s cubic-bezier(.16,1,.3,1) both}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.sidebar{background:linear-gradient(180deg,#16336E,#0A1B3D);color:#fff;padding:24px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;align-self:start}
+.sb-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:21px;padding:4px 8px 22px}
+.nav-i{display:flex;align-items:center;gap:13px;width:100%;padding:12px 14px;border-radius:12px;border:none;background:none;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:4px}
+.nav-i svg{width:20px;height:20px;stroke-width:1.7}.nav-i{transition:background .3s var(--ease),color .3s var(--ease)}.nav-i.active{background:rgba(255,255,255,.12);color:#fff}.nav-i:hover{color:#fff;background:rgba(255,255,255,.06)}.nav-i:active{transform:scale(.97)}
+.sb-user{margin-top:auto;display:flex;align-items:center;gap:11px;padding:12px 8px;border-top:1px solid rgba(255,255,255,.12)}
+.av{border-radius:50%;background:#0A1B3D center/cover;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;overflow:hidden;flex:0 0 auto}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.sb-user .av{width:38px;height:38px;border:2px solid rgba(255,255,255,.3)}
+.sb-user .nm{font-size:13px;font-weight:700;line-height:1.2}.sb-user .so{font-size:11px;color:rgba(255,255,255,.6);text-decoration:none}
+.main{padding:32px 38px;max-width:1180px;width:100%;min-width:0;margin:0 auto}
+.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:10px;flex-wrap:wrap}.head>div:last-child{display:flex;gap:8px;flex-wrap:wrap}
+.head h1{font-size:25px;font-weight:800;letter-spacing:-.6px}.head .sub{font-size:13px;color:var(--muted);margin-top:3px}
+.btn{padding:11px 18px;border-radius:999px;border:none;background:var(--btnbg);color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:transform .4s var(--ease),box-shadow .4s var(--ease);box-shadow:0 8px 18px -8px rgba(10,27,61,.6)}.btn:hover{box-shadow:0 12px 26px -8px rgba(10,27,61,.6)}.btn:active{transform:scale(.96)}
+.btn.ghost{background:var(--card);color:var(--navy);box-shadow:inset 0 0 0 1px var(--line),var(--shadow-sm)}
+.btn:disabled{opacity:.6}
+.grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start;min-width:0}.grid>*{min-width:0}
+.hero{position:relative;background:linear-gradient(150deg,#1B3D7A,#0A1B3D 72%);border-radius:26px;padding:28px;color:#fff;box-shadow:var(--shadow);overflow:hidden}.hero::after{content:"";position:absolute;inset:0;border-radius:26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.06);pointer-events:none}.hero>*{position:relative;z-index:1}
+.hero .label{font-size:11px;opacity:.66;text-transform:uppercase;letter-spacing:.14em;font-weight:600}.hero .big{font-size:38px;font-weight:800;letter-spacing:-1.5px;margin-top:10px;font-variant-numeric:tabular-nums}
+.hero .bd{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+.bdchip{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);border-radius:14px;padding:10px 13px;font-size:11px;flex:1;min-width:104px}
+.bdchip span{display:block;opacity:.6;margin-bottom:3px}.bdchip b{font-size:14px;font-weight:700}
+.qadd{display:flex;gap:10px;margin-top:14px}
+.qadd button{flex:1;padding:13px;border-radius:16px;border:none;background:rgba(255,255,255,.96);color:#0A1B3D;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;box-shadow:var(--shadow-sm);transition:transform .4s var(--ease),box-shadow .4s var(--ease)}.qadd button:hover{transform:translateY(-2px);box-shadow:var(--shadow)}.qadd button:active{transform:scale(.97)}
+.card{background:var(--card);border-radius:24px;padding:22px;box-shadow:var(--shadow-sm);margin-bottom:18px;transition:transform .5s var(--ease),box-shadow .5s var(--ease)}@media(hover:hover){.card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}}
+.card h3{font-size:14px;font-weight:700;margin-bottom:14px}
+.view{display:none}.view.active{display:block}.view.active>*{animation:rise .55s var(--ease) both}.view.active>*:nth-child(2){animation-delay:.06s}.view.active>*:nth-child(3){animation-delay:.12s}.view.active>*:nth-child(4){animation-delay:.18s}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}@keyframes appfade{from{opacity:0}to{opacity:1}}@keyframes cbsway{0%,100%{transform:rotate(-4deg) scale(1)}50%{transform:rotate(4deg) scale(1.05)}}.cbLeaf{transform-origin:bottom center;flex:0 0 auto}.cbLeaf svg{animation:cbsway 4.5s var(--ease) infinite}.cbforest{display:flex;flex-wrap:wrap;gap:5px;min-height:26px}.cbtree{display:inline-block;animation:cbgrow .5s var(--ease) both}@keyframes cbgrow{0%{opacity:0;transform:scale(.2) translateY(8px)}100%{opacity:1;transform:none}}.cbsec{margin-top:16px}.cbroad{position:relative;height:34px;border-bottom:2px dashed var(--line);overflow:hidden;margin-top:4px}.cbcar{position:absolute;bottom:3px;left:0;animation:cbdrive 3.2s cubic-bezier(.45,0,.55,1) infinite}@keyframes cbdrive{0%{transform:translateX(-50px)}100%{transform:translateX(380px)}}.toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:#0A1B3D;color:#fff;border-radius:14px;padding:11px 16px;display:flex;align-items:center;gap:16px;font-size:13px;font-weight:600;box-shadow:0 14px 32px -8px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .25s var(--ease),transform .25s var(--ease);z-index:60;max-width:90vw}.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}.toast button{background:none;border:none;color:#2FE0C2;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;padding:0}#txns .row2{background:var(--card)}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.row2{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-top:1px solid var(--line)}.row2:first-child{border-top:none}
+.row2 .l{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 auto}.row2 .l>div{min-width:0}
+.ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;flex:0 0 auto}
+.nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.d{font-size:11.5px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+.row2>div:last-child{flex:0 0 auto}
+.amt{font-weight:700;font-size:14px;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}.neg{color:var(--red)}.pos{color:var(--green)}.mut{color:var(--muted)}
+.sub2{font-size:11px;color:var(--muted);font-weight:600}
+.badge{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:7px;background:#FFF2E0;color:#C77B14;margin-left:6px}
+.ibar{margin:13px 0}.ibar .l{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}.ibar .l .pct{color:var(--muted);font-weight:600}
+.barwrap{height:9px;background:var(--line);border-radius:6px;overflow:hidden}.barwrap i{display:block;height:100%;border-radius:6px}
+.search{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow-sm),inset 0 0 0 1px var(--line)}
+.search input{border:none;outline:none;flex:1;font-size:13px;font-family:inherit;background:none}.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chips button{flex:0 0 auto;padding:8px 15px;border-radius:999px;border:none;background:var(--card);color:var(--muted);font-weight:700;font-size:12.5px;font-family:inherit;cursor:pointer;box-shadow:inset 0 0 0 1px var(--line);transition:color .25s var(--ease),background .25s var(--ease),transform .2s var(--ease)}.chips button.active{background:var(--btnbg);color:#fff;box-shadow:inset 0 0 0 1px var(--btnbg)}.chips button:active{transform:scale(.95)}.customrange{display:flex;align-items:center;gap:10px;margin-bottom:14px}.customrange input{flex:1;min-width:0;padding:10px 12px;border:none;border-radius:12px;background:var(--card);color:var(--ink);font-family:inherit;font-size:13px;box-shadow:inset 0 0 0 1px var(--line)}.customrange span{color:var(--muted);font-size:12px;flex:0 0 auto}.rangesel{border:none;border-radius:16px;background:var(--card);font-weight:700;font-size:12px;color:var(--ink);font-family:inherit;padding:0 10px;box-shadow:var(--shadow-sm),inset 0 0 0 1px var(--line);max-width:46%}.rangesel option{color:var(--ink);background:var(--card)}[data-theme="contrast"] .rangesel{box-shadow:0 0 0 1.5px #000}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:30px 16px}
+.del{background:none;border:none;color:#C2CCDD;cursor:pointer;font-size:18px;padding:0 4px}
+.logout{margin-top:8px;padding:14px 18px;border-radius:13px;border:1px solid #F5C2CE;background:var(--card);color:var(--red);font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;width:100%}
+.set-row{display:flex;align-items:center;gap:14px;padding:15px 0;border-top:1px solid var(--line)}.set-row:first-child{border-top:none}
+.set-sec{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:24px 6px 10px;max-width:560px}
+.set-row .av{width:48px;height:48px;background:linear-gradient(135deg,#16336E,#0A1B3D) center/cover;cursor:pointer}
+.set-row select{margin-left:auto;padding:9px 11px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;color:var(--ink);background:var(--card)}
+.install{display:none;margin-top:8px;padding:13px;border-radius:13px;border:none;background:var(--teal);color:#06243B;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;width:100%}
+.backdrop{position:fixed;inset:0;background:rgba(10,27,61,.45);opacity:0;pointer-events:none;transition:.2s;z-index:40}.backdrop.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;z-index:41;background:var(--card);box-shadow:0 -10px 40px rgba(10,27,61,.2);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+@media(min-width:900px){.sheet{top:50%;left:50%;width:440px;border-radius:22px;transform:translate(-50%,-46%);opacity:0;pointer-events:none}.sheet.show{transform:translate(-50%,-50%);opacity:1;pointer-events:auto}}
+@media(max-width:899px){.sheet{left:0;right:0;bottom:0;border-radius:24px 24px 0 0;transform:translateY(100%)}.sheet.show{transform:none}}
+.sheet .inner{padding:22px}.sheet h3{font-size:17px;font-weight:800;margin-bottom:16px}.grab{display:none}@media(max-width:899px){.grab{display:block;width:38px;height:4px;border-radius:999px;background:var(--line);margin:9px auto 0}}
+.fld{margin-bottom:13px}.fld label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
+.fld input,.fld select{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:11px;font-size:14px;font-family:inherit;outline:none;background:var(--card);color:var(--ink)}.fld select option{color:var(--ink);background:var(--card)}.pweye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:7px;color:var(--muted);display:flex;align-items:center}.pweye:active{transform:translateY(-50%) scale(.9)}
+.two{display:flex;gap:10px}.two>*{flex:1}
+.mtop{display:none}.mnav{display:none}
+@media(max-width:899px){
+html,body{overflow-x:hidden} .app{grid-template-columns:1fr}.sidebar{display:none}.main{padding:16px 16px 96px}.grid{grid-template-columns:1fr}
+ .mtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.mtop .b{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px}
+ .mtop .av{width:38px;height:38px;background:linear-gradient(135deg,#16336E,#0A1B3D) center/cover}
+ .mnav{display:flex;position:fixed;left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom));background:rgba(255,255,255,.78);-webkit-backdrop-filter:blur(20px) saturate(1.7);backdrop-filter:blur(20px) saturate(1.7);box-shadow:0 12px 30px -8px rgba(10,27,61,.22),inset 0 0 0 1px rgba(255,255,255,.6);border-radius:24px;height:60px;justify-content:space-around;align-items:center;padding:0 5px;overflow:hidden;z-index:20}
+ .mnav button{background:none;border:none;color:var(--muted);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit;cursor:pointer;padding:6px 9px;border-radius:14px;transition:color .35s cubic-bezier(.16,1,.3,1),background .35s cubic-bezier(.16,1,.3,1),transform .25s cubic-bezier(.16,1,.3,1)}.mnav button.active{color:var(--navy);background:rgba(22,199,168,.15)}.mnav button:active{transform:scale(.93)}.mnav svg{width:21px;height:21px;stroke-width:1.7}
+ .head h1{font-size:20px}.hero .big{font-size:30px}
+}
+.eye{padding:11px 13px;border-radius:999px}.insgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{background:var(--bg);border-radius:16px;padding:13px 14px}.stat span{display:block;font-size:10.5px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}.stat b{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.3px}</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<g id="i-home"><path d="M3 10l9-7 9 7v9a2 2 0 01-2 2h-4v-6H9v6H5a2 2 0 01-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></g>
+<g id="i-acc"><rect x="3" y="6" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 10h18" stroke="currentColor" stroke-width="2"/></g>
+<g id="i-pf"><path d="M4 19V10M10 19V5M16 19v-6M22 19H2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></g>
+<g id="i-act"><path d="M3 12h4l2 6 4-14 2 8h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="i-set"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 13a1.6 1.6 0 00.3 1.8M4.6 11a1.6 1.6 0 00-.3-1.8" fill="none" stroke="currentColor" stroke-width="2"/></g>
+</defs></svg>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-brand"><svg width="30" height="30" viewBox="0 0 512 512"><rect x="16" y="16" width="480" height="480" rx="120" fill="#0A1B3D"/><circle cx="247" cy="256" r="118" fill="none" stroke="#fff" stroke-width="48" stroke-linecap="round" stroke-dasharray="515 227" transform="rotate(55 247 256)"/><circle cx="357" cy="256" r="50" fill="#2FE0C2"/></svg>Crumina</div>
+    <button class="nav-i active" data-v="home"><svg viewBox="0 0 24 24"><use href="#i-home"/></svg>Overview</button>
+    <button class="nav-i" data-v="accounts"><svg viewBox="0 0 24 24"><use href="#i-acc"/></svg>Accounts</button>
+    <button class="nav-i" data-v="portfolio"><svg viewBox="0 0 24 24"><use href="#i-pf"/></svg>Portfolio</button>
+    <button class="nav-i" data-v="activity"><svg viewBox="0 0 24 24"><use href="#i-act"/></svg>Activity</button>
+    <button class="nav-i" data-v="settings"><svg viewBox="0 0 24 24"><use href="#i-set"/></svg>Settings</button>
+    <div class="sb-user"><div class="av" id="sbAva">·</div><div><div class="nm" id="sbName">…</div><a class="so" href="/api/logout">Sign out</a></div></div>
+  </aside>
+  <main class="main">
+    <div class="mtop"><div class="b"><svg width="26" height="26" viewBox="0 0 512 512"><rect x="16" y="16" width="480" height="480" rx="120" fill="#0A1B3D"/><circle cx="247" cy="256" r="118" fill="none" stroke="#fff" stroke-width="48" stroke-linecap="round" stroke-dasharray="515 227" transform="rotate(55 247 256)"/><circle cx="357" cy="256" r="50" fill="#2FE0C2"/></svg>Crumina</div><div class="av" id="mAva"></div></div>
+    <section class="view active" id="home">
+      <div class="head"><div><h1 id="greet">Overview</h1><div class="sub" data-i18n="home_sub">Your whole financial picture</div></div><div style="display:flex;gap:8px"><button class="btn ghost eye" id="eyeBtn" data-act="toggleHide" title="Hide amounts" aria-label="Hide amounts"></button><button class="btn" id="syncBtn" data-act="sync" data-i18n="sync">Sync Gmail</button></div></div>
+      <div class="hero"><div class="label">Net worth · <span id="nwCcy">IDR</span></div><div class="big" id="nw">—</div>
+        <div class="bd"><div class="bdchip"><span data-i18n="cash_accts">Cash &amp; accounts</span><b id="cAcc">—</b></div><div class="bdchip"><span data-i18n="investments">Investments</span><b id="cInv">—</b></div><div class="bdchip"><span data-i18n="expenses_30">Expenses · 30d</span><b id="cSpend">—</b></div></div>
+        <div class="qadd"><button data-act="openForm" data-arg="expense" data-i18n="add_expense">＋ Add expense</button><button data-act="openForm" data-arg="account" data-i18n="add_account">＋ Add account</button><button data-act="openForm" data-arg="holding" data-i18n="add_holdings">＋ Add holdings</button></div>
+      </div>
+      <div class="grid" style="margin-top:18px">
+        <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h3 style="margin:0" data-i18n="recent_tx">Recent transactions</h3><a style="font-size:12.5px;color:var(--teal);font-weight:600;cursor:pointer" data-act="show" data-arg="activity" data-i18n="view_all">View all</a></div><div id="recent"><div class="empty">Tap “Sync Gmail” to pull your card activity.</div></div></div>
+        <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px"><h3 id="wgTitle" style="margin:0">Where it goes · 30d</h3><select id="insRange" class="rangesel"><option value="30" data-i18n="rg_last30">Last 30 days</option><option value="month" data-i18n="rg_month">This month</option><option value="custom" data-i18n="rg_custom">Custom</option></select></div><div class="customrange" id="insCustom" style="display:none;margin-bottom:12px"><input type="date" id="insFrom"><span data-i18n="rg_to">to</span><input type="date" id="insTo"></div><div id="homeCats"><div class="empty">No spending data yet.</div></div></div><div class="card" id="insCard" style="grid-column:1/-1"><h3 id="insTitle">Insights · 30d</h3><div id="insStats" class="insgrid"></div><div id="topMerch" style="margin-top:14px"></div></div><div class="card" id="budCard" style="grid-column:1/-1"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="margin:0" data-i18n="budgets">Budgets</h3><button class="btn ghost" style="padding:8px 13px;font-size:12px" data-act="openForm" data-arg="budget" data-i18n="set_budget">Set budget</button></div><div id="budList"></div></div><div class="card" id="trendCard" style="grid-column:1/-1"><h3 data-i18n="trend">Spending trend</h3><div id="trendList"></div></div><div class="card" id="recurCard" style="grid-column:1/-1"><h3 data-i18n="recurring">Recurring &amp; subscriptions</h3><div id="recurList"></div></div><div class="card" id="goalCard" style="grid-column:1/-1"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="margin:0" data-i18n="goals">Goals</h3><button class="btn ghost" style="padding:8px 13px;font-size:12px" data-act="openForm" data-arg="goal" data-i18n="add_goal">Add goal</button></div><div id="goalList"></div></div><div class="card" id="carbonCard" data-act="carbonDetail" style="grid-column:1/-1;display:none;cursor:pointer"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0" data-i18n="carbon_title">Carbon footprint</h3><span class="d" data-i18n="carbon_sub">Estimated from your spending</span></div><div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap"><div class="cbLeaf" aria-hidden="true"><svg viewBox="0 0 64 64" width="60" height="60"><path d="M52 12C30 12 16 24 16 42c0 4 1 8 3 11 0 0 13-2 22-11s11-22 11-30z" fill="none" stroke="var(--green)" stroke-width="3" stroke-linejoin="round"/><path d="M40 24C32 30 24 38 19 53" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round"/></svg></div><div><div style="display:flex;align-items:baseline;gap:7px"><div id="cbKg" style="font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1">0</div><div class="d" id="cbKgU">kg CO₂e</div></div></div></div><div style="display:flex;gap:10px;margin-top:14px"><div class="stat" style="flex:1;text-align:center"><div class="d" data-i18n="carbon_trees">Trees to offset · 1yr</div><div id="cbTrees" style="font-weight:800;font-size:16px">0</div></div><div class="stat" style="flex:1;text-align:center"><div class="d" data-i18n="carbon_km">Same as driving</div><div id="cbKm" style="font-weight:800;font-size:16px">0</div></div></div><div id="cbBreak" style="margin-top:14px"></div><div class="d" style="margin-top:10px;font-size:11px;opacity:.7" data-i18n="carbon_note">Estimates use category and merchant emission factors. Indicative only.</div></div>
+      </div>
+    </section>
+    <section class="view" id="accounts">
+      <div class="head"><div><h1 data-i18n="nav_accounts">Accounts</h1><div class="sub" id="accSub">Cash, savings &amp; deposits</div></div><div style="display:flex;gap:8px"><button class="btn ghost" id="stmtBtn" data-act="readStmt" data-i18n="read_stmt">Read statements</button><button class="btn ghost" data-act="openForm" data-arg="upload" data-i18n="upload_pdf">Upload PDF</button><button class="btn" data-act="openForm" data-arg="account" data-i18n="add_account">＋ Add account</button></div></div>
+      <div class="card" id="stmtCard" style="display:none"><h3 data-i18n="from_stmts">From your statements</h3><div id="stmtList"></div></div>
+      <div class="card"><div id="accList"><div class="empty">No accounts yet — tap ＋ Add account (cash, savings, deposits).</div></div></div>
+    </section>
+    <section class="view" id="portfolio">
+      <div class="head"><div><h1 data-i18n="nav_portfolio">Portfolio</h1><div class="sub" id="pfSub">Your investments</div></div><button class="btn" data-act="openForm" data-arg="holding" data-i18n="add_holdings">＋ Add holdings</button></div>
+      <div class="hero"><div class="label" data-i18n="pf_value">Portfolio value</div><div class="big" id="pfVal">…</div><div class="sub" id="pfGain" style="font-size:13px;margin-top:8px;opacity:.9"></div></div>
+      <div class="card" style="margin-top:18px"><div id="pfList"><div class="empty">No holdings yet — tap ＋ Add holdings (stocks, crypto, funds).</div></div></div>
+    </section>
+    <section class="view" id="activity">
+      <div class="head"><div><h1 data-i18n="nav_activity">Activity</h1><div class="sub" data-i18n="act_sub">Synced card transactions</div></div><button class="btn" data-act="openForm" data-arg="expense" data-i18n="add_expense">＋ Add expense</button></div>
+      <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9AA6BE" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4" stroke-linecap="round"/></svg><input id="q" data-i18n-ph="search_ph" placeholder="Search merchant…"></div><div class="chips" id="txChips"><button data-act="setRange" data-arg="7" data-i18n="rg_7">7D</button><button data-act="setRange" data-arg="30" data-i18n="rg_30">30D</button><button data-act="setRange" data-arg="90" data-i18n="rg_90">90D</button><button data-act="setRange" data-arg="365" data-i18n="rg_365">1Y</button><button data-act="setRange" data-arg="0" data-i18n="rg_all">All</button><button data-act="setRange" data-arg="custom" data-i18n="rg_custom">Custom</button></div><div class="customrange" id="txCustom" style="display:none"><input type="date" id="txFrom"><span data-i18n="rg_to">to</span><input type="date" id="txTo"></div>
+      <div class="card"><div id="txns"><div class="empty">Nothing yet — sync from Overview.</div></div></div>
+    </section>
+    <section class="view" id="settings">
+      <div class="head"><div><h1 data-i18n="nav_settings">Settings</h1></div></div>
+      <div class="set-sec" data-i18n="sec_account">Account</div>
+      <div class="card" style="max-width:560px">
+        <div class="set-row"><div class="av" id="setAva" data-act="avatar">M</div><div style="flex:1"><div style="font-weight:700;font-size:15px" id="setName">You</div><div style="font-size:12px;color:var(--muted)" id="setEmail"></div></div></div>
+        <div class="set-row" style="cursor:pointer" data-act="avatar"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="change_pic">Change profile picture</div></div></div><div class="set-row" style="cursor:pointer" data-act="openForm" data-arg="rename"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="display_name">Display name</div></div></div>
+        <input type="file" id="avatarInput" accept="image/*" hidden>
+      </div>
+      <div class="set-sec" data-i18n="sec_preferences">Preferences</div>
+      <div class="card" style="max-width:560px">
+        <div class="set-row"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="main_ccy">Main currency</div><div style="font-size:12px;color:var(--muted)" data-i18n="main_ccy_sub">All balances shown in this currency at live rates</div></div><select id="ccySel"></select></div>
+        <div class="set-row"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="language">Language</div><div style="font-size:12px;color:var(--muted)" data-i18n="language_sub">Display language</div></div><select id="langSel"><option value="en">English</option><option value="id">Bahasa Indonesia</option></select></div><div class="set-row"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="appearance">Appearance</div><div style="font-size:12px;color:var(--muted)" data-i18n="appearance_sub">Theme and contrast</div></div><select id="themeSel"><option value="system" data-i18n="theme_system">System</option><option value="light" data-i18n="theme_light">Light</option><option value="dark" data-i18n="theme_dark">Dark</option><option value="contrast" data-i18n="theme_contrast">High contrast</option></select></div><div class="set-row"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="country">Country</div><div style="font-size:12px;color:var(--muted)" data-i18n="country_sub">Used for carbon estimates</div></div><select id="countrySel"><option value="ID">Indonesia</option><option value="MY">Malaysia</option><option value="SG">Singapore</option><option value="PH">Philippines</option><option value="TH">Thailand</option><option value="VN">Vietnam</option><option value="IN">India</option><option value="CN">China</option><option value="JP">Japan</option><option value="KR">South Korea</option><option value="AU">Australia</option><option value="US">United States</option><option value="GB">United Kingdom</option><option value="DE">Germany</option><option value="FR">France</option><option value="GLOBAL">Other / Global</option></select></div>
+        <div class="set-row" style="cursor:pointer" data-act="requestNotify"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="notifications">Notifications</div><div style="font-size:12px;color:var(--muted)" id="notifStatus"></div></div><div style="color:var(--teal);font-weight:800;font-size:13px;margin-left:auto" data-i18n="enable">Enable</div></div>
+      </div>
+      <div class="set-sec" data-i18n="sec_data">Data</div>
+      <div class="card" style="max-width:560px">
+        <div class="set-row" style="cursor:pointer" data-act="openForm" data-arg="stmt"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="stmt_unlock">Statement unlock</div><div style="font-size:12px;color:var(--muted)" id="stmtSub" data-i18n="stmt_unlock_sub">Store statement passwords to read full balances</div></div></div>
+        <div class="set-row" style="cursor:pointer" data-act="exportCSV"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="export_csv">Export CSV</div><div style="font-size:12px;color:var(--muted)" data-i18n="export_csv_sub">Download your transactions as a CSV file</div></div></div>
+      </div>
+      <div class="set-sec" data-i18n="sec_about">About</div>
+      <div class="card" style="max-width:560px">
+        <div class="set-row"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="app_version">App version</div><div style="font-size:12px;color:var(--muted)" data-i18n="app_version_sub">Web app, installable on this device</div></div><div style="color:var(--muted);font-weight:700;margin-left:auto">v0.10.17</div></div>
+        <div class="set-row" style="cursor:pointer" data-act="privacy"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="privacy_policy">Privacy policy</div><div style="font-size:12px;color:var(--muted)" data-i18n="privacy_policy_sub">How your data is collected and used</div></div></div>
+        <div class="set-row" style="cursor:pointer" data-act="terms"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="terms_of_service">Terms of Service</div><div style="font-size:12px;color:var(--muted)" data-i18n="terms_of_service_sub">The terms that govern your use of Crumina</div></div></div>
+      </div>
+      <div class="set-sec" data-i18n="developer">Developer</div>
+      <div class="card" style="max-width:560px">
+        <div class="set-row" style="cursor:pointer" data-act="source"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="view_source">Source code</div><div style="font-size:12px;color:var(--muted)" data-i18n="view_source_sub">Open the repository on GitHub</div></div></div>
+        <div class="set-row" style="cursor:pointer" data-act="exportData"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="export_data">Export data (backup)</div><div style="font-size:12px;color:var(--muted)" data-i18n="export_data_sub">Download all your local data as JSON</div></div></div>
+        <div class="set-row" style="cursor:pointer" data-act="importData"><div style="flex:1"><div style="font-weight:700;font-size:14px" data-i18n="import_data">Import data (restore)</div><div style="font-size:12px;color:var(--muted)" data-i18n="import_data_sub">Restore from a backup file</div></div></div>
+      </div>
+      <div style="max-width:560px">
+        <button class="install" id="installBtn" data-act="doInstall" data-i18n="install_app">Install Crumina on this device</button>
+        <button class="logout" data-act="logout" data-i18n="log_out">Log out</button>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="backdrop" id="bd" data-act="closeForm"></div>
+<div class="sheet" id="sheet"><div class="grab" aria-hidden="true"></div><div class="inner" id="sheetInner"></div></div>
+<nav class="mnav">
+  <button class="active" data-v="home"><svg viewBox="0 0 24 24"><use href="#i-home"/></svg>Overview</button>
+  <button data-v="accounts"><svg viewBox="0 0 24 24"><use href="#i-acc"/></svg>Accounts</button>
+  <button data-v="portfolio"><svg viewBox="0 0 24 24"><use href="#i-pf"/></svg>Portfolio</button>
+  <button data-v="activity"><svg viewBox="0 0 24 24"><use href="#i-act"/></svg>Activity</button>
+  <button data-v="settings"><svg viewBox="0 0 24 24"><use href="#i-set"/></svg>Settings</button>
+</nav>
+<div id="toast" class="toast"></div><script src="/app.js"></script></body></html>

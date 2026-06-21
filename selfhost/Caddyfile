@@ -1,0 +1,17 @@
+# Caddy auto-provisions + renews Let's Encrypt TLS for each hostname below.
+crumina.example.com {
+    encode gzip zstd
+    reverse_proxy app:3000
+}
+
+# Optional: also host the apex site on this same VPS (uncomment + provide files).
+# Static example:
+# example.com, www.example.com {
+#     root * /srv/site
+#     file_server
+#     encode gzip zstd
+# }
+# Or proxy another app:
+# example.com {
+#     reverse_proxy localhost:4000
+# }
