@@ -1,6 +1,8 @@
 package id.tirtawijata.crumina.data
 
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface Api {
@@ -11,4 +13,5 @@ interface Api {
     @GET("api/statements") suspend fun discoverBanks(@Query("discover") discover: Int): DiscoverResponse
     @GET("api/yf") suspend fun search(@Query("q") q: String): SearchResponse
     @GET("api/yf") suspend fun quote(@Query("symbol") symbol: String): QuoteResponse
+    @POST("api/upload") suspend fun upload(@Body body: UploadReq): UploadResponse
 }

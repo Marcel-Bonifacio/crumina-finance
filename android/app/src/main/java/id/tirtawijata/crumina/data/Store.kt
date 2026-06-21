@@ -61,5 +61,15 @@ class Store(context: Context) {
         } ?: emptyList()
         set(v) { prefs.edit().putString("goals", gson.toJson(v)).apply() }
 
+    private val manualType = object : TypeToken<List<ManualTx>>() {}.type
+    var manualTx: List<ManualTx>
+        get() = prefs.getString("manualtx", null)?.let { runCatching { gson.fromJson<List<ManualTx>>(it, manualType) }.getOrNull() } ?: emptyList()
+        set(v) { prefs.edit().putString("manualtx", gson.toJson(v)).apply() }
+
+    private val stmtListType = object : TypeToken<List<StmtAccount>>() {}.type
+    var uploadedAccounts: List<StmtAccount>
+        get() = prefs.getString("uploaded", null)?.let { runCatching { gson.fromJson<List<StmtAccount>>(it, stmtListType) }.getOrNull() } ?: emptyList()
+        set(v) { prefs.edit().putString("uploaded", gson.toJson(v)).apply() }
+
     fun clear() = prefs.edit().clear().apply()
 }

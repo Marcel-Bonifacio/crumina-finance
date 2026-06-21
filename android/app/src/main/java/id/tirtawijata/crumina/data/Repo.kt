@@ -25,6 +25,8 @@ object Repo {
     // local data
     var accounts by mutableStateOf<List<Account>>(emptyList())
     var holdings by mutableStateOf<List<Holding>>(emptyList())
+    var manualTx by mutableStateOf<List<ManualTx>>(emptyList())
+    var uploadedAccounts by mutableStateOf<List<StmtAccount>>(emptyList())
 
     // server-derived
     var profile by mutableStateOf<Profile?>(null)
@@ -35,6 +37,8 @@ object Repo {
     // statement unlock
     var discoveredBanks by mutableStateOf<List<BankSlot>>(emptyList())
     var statementPasswords by mutableStateOf<Map<String, String>>(emptyMap())
+
+    // budgets + goals
     var budget by mutableStateOf(Budget())
     var goals by mutableStateOf<List<Goal>>(emptyList())
 
@@ -47,6 +51,7 @@ object Repo {
         secure = SecureStore(context.applicationContext)
         mainCcy = store.mainCcy; lang = store.lang; hideAmounts = store.hideAmounts
         accounts = store.accounts; holdings = store.holdings
+        manualTx = store.manualTx; uploadedAccounts = store.uploadedAccounts
         store.profileJson?.let { profile = runCatching { Gson().fromJson(it, Profile::class.java) }.getOrNull() }
         statementPasswords = secure.statementPw?.let {
             runCatching { Gson().fromJson<Map<String, String>>(it, mapType) }.getOrNull()
@@ -75,8 +80,7 @@ object Repo {
             fx = runCatching { api.fx(mainCcy).rates }.getOrNull() ?: emptyMap()
             runCatching { api.data().profile }.getOrNull()?.let { profile = it }
             transactions = runCatching { api.sync().data?.transactions }.getOrNull() ?: emptyList()
-            stmtAccounts = (runCatching { api.statements().accounts }.getOrNull() ?: emptyList())
-                .filter { it.error == null }
+            stmtAccounts = (runCatching { api.statements().accounts }.getOrNull() ?: emptyList()).filter { it.error == null }
             if (holdings.isNotEmpty()) {
                 holdings = holdings.map { h ->
                     val q = runCatching { api.quote(h.symbol) }.getOrNull()
@@ -84,9 +88,7 @@ object Repo {
                 }
                 store.holdings = holdings
             }
-        } catch (e: Exception) {
-            error = e.message ?: "Sync failed"
-        }
+        } catch (e: Exception) { error = e.message ?: "Sync failed" }
         loading = false
     }
 
@@ -99,6 +101,20 @@ object Repo {
         if (pw.isBlank()) m.remove(bank) else m[bank] = pw
         statementPasswords = m
         secure.statementPw = if (m.isEmpty()) null else Gson().toJson(m)
+    }
+
+    suspend fun upload(pdfBase64: String, password: String?) {
+        loading = true; error = null
+        try {
+            val resp = Net.api(secure).upload(UploadReq(pdfBase64, password))
+            if (resp.ok && resp.accounts != null) {
+                uploadedAccounts = uploadedAccounts + resp.accounts.filter { it.error == null }
+                store.uploadedAccounts = uploadedAccounts
+            } else {
+                error = resp.error ?: resp.note ?: "Could not read PDF"
+            }
+        } catch (e: Exception) { error = e.message ?: "Upload failed" }
+        loading = false
     }
 
     // ---- money ----
@@ -118,38 +134,33 @@ object Repo {
         if (hideAmounts) return "••••"
         val c = ccy ?: mainCcy
         val dec = if (c == "IDR" || c == "JPY") 0 else 2
-        val nf = NumberFormat.getNumberInstance(Locale.US).apply {
-            minimumFractionDigits = dec; maximumFractionDigits = dec
-        }
+        val nf = NumberFormat.getNumberInstance(Locale.US).apply { minimumFractionDigits = dec; maximumFractionDigits = dec }
         val s = sym[c] ?: "$c "
         val sign = if (signed && amount < 0) "−" else ""
         return sign + s + nf.format(abs(amount))
     }
 
-    fun inMain(amount: Double, from: String?, signed: Boolean = true) =
-        money(conv(amount, from), mainCcy, signed)
+    fun inMain(amount: Double, from: String?, signed: Boolean = true) = money(conv(amount, from), mainCcy, signed)
+
+    // ---- statements (synced + uploaded) ----
+    val allStmt: List<StmtAccount> get() = stmtAccounts + uploadedAccounts
 
     // ---- totals ----
     val cashTotal: Double
         get() = accounts.sumOf { conv(it.bal, it.ccy) } +
-            stmtAccounts.filter { it.type in listOf("savings", "bank", "cash", "deposit") }
-                .sumOf { conv(it.balance ?: 0.0, it.ccy ?: "IDR") }
-
+            allStmt.filter { it.type in listOf("savings", "bank", "cash", "deposit") }.sumOf { conv(it.balance ?: 0.0, it.ccy ?: "IDR") }
     val investTotal: Double
         get() = holdings.sumOf { conv(it.units * it.price, it.ccy) } +
-            stmtAccounts.filter { it.type == "investment" }
-                .sumOf { conv(it.balance ?: 0.0, it.ccy ?: "IDR") }
-
+            allStmt.filter { it.type == "investment" }.sumOf { conv(it.balance ?: 0.0, it.ccy ?: "IDR") }
     private val cardTotal: Double
-        get() = stmtAccounts.filter { it.type == "credit_card" }
-            .sumOf { conv(it.balance ?: 0.0, it.ccy ?: "IDR") }
-
+        get() = allStmt.filter { it.type == "credit_card" }.sumOf { conv(it.balance ?: 0.0, it.ccy ?: "IDR") }
     val netWorth: Double get() = cashTotal + investTotal + cardTotal
 
     val feed: List<Txn>
         get() {
-            val stmtTx = stmtAccounts.flatMap { it.txns ?: emptyList() }
-            return (transactions + stmtTx).sortedByDescending { it.date ?: "" }
+            val stmtTx = allStmt.flatMap { it.txns ?: emptyList() }
+            val manual = manualTx.map { Txn(it.date, -abs(it.amount), it.merchant, "Manual", "spend", null, "manual") }
+            return (transactions + stmtTx + manual).sortedByDescending { it.date ?: "" }
         }
 
     // ---- insights / budgets ----
@@ -162,46 +173,57 @@ object Repo {
         } catch (e: Exception) { Long.MAX_VALUE }
     }
 
-    private fun spendTxWithin(days: Long): List<Txn> =
-        transactions.filter { (it.cls == "spend" || it.cls == "fee") && daysAgo(it.date) in 0..days }
+    private data class Spend(val category: String, val amountMain: Double, val date: String?, val merchant: String?)
 
-    private fun spendWithin(days: Long): List<Pair<String, Double>> =
-        spendTxWithin(days).map { Categorize.category(it.merchant) to conv(abs(it.amount), "IDR") }
+    private fun allSpend(): List<Spend> =
+        transactions.filter { it.cls == "spend" || it.cls == "fee" }
+            .map { Spend(Categorize.category(it.merchant), conv(abs(it.amount), "IDR"), it.date, it.merchant) } +
+        manualTx.map { Spend(it.category, conv(abs(it.amount), it.ccy), it.date, it.merchant) }
 
-    fun spentWindow(days: Long): Double = spendWithin(days).sumOf { it.second }
-    fun spentInCategory(cat: String, days: Long): Double = spendWithin(days).filter { it.first == cat }.sumOf { it.second }
+    private fun spendWithin(days: Long): List<Spend> = allSpend().filter { daysAgo(it.date) in 0..days }
+
+    fun spentWindow(days: Long): Double = spendWithin(days).sumOf { it.amountMain }
+    fun spentInCategory(cat: String, days: Long): Double = spendWithin(days).filter { it.category == cat }.sumOf { it.amountMain }
     fun categoryTotals(days: Long): List<Pair<String, Double>> =
-        spendWithin(days).groupBy({ it.first }, { it.second }).map { it.key to it.value.sum() }.sortedByDescending { it.second }
+        spendWithin(days).groupBy { it.category }.map { it.key to it.value.sumOf { s -> s.amountMain } }.sortedByDescending { it.second }
 
     val spent30: Double get() = spentWindow(30)
     val daily30: Double get() = spent30 / 30.0
-    val biggest30: Double get() = spendTxWithin(30).maxOfOrNull { conv(abs(it.amount), "IDR") } ?: 0.0
-    val count30: Int get() = spendTxWithin(30).size
+    val biggest30: Double get() = spendWithin(30).maxOfOrNull { it.amountMain } ?: 0.0
+    val count30: Int get() = spendWithin(30).size
 
-    // recurring: a synced merchant seen 2+ times (avg amount in main currency)
     fun recurring(): List<Pair<String, Double>> =
-        transactions.filter { (it.cls == "spend" || it.cls == "fee") && !it.merchant.isNullOrBlank() }
+        spendWithin(120).filter { !it.merchant.isNullOrBlank() }
             .groupBy { it.merchant!!.trim() }
             .filter { it.value.size >= 2 }
-            .map { (m, list) -> m to list.map { conv(abs(it.amount), "IDR") }.average() }
+            .map { (m, l) -> m to l.map { it.amountMain }.average() }
             .sortedByDescending { it.second }
 
-    // carbon: rough kg CO2e per USD spent, by category
     private val co2Factors = mapOf(
         "Food & Dining" to 0.4, "Groceries" to 0.5, "Transport" to 0.6, "Travel" to 1.1,
         "Shopping" to 0.5, "Bills & Subs" to 0.3, "Health" to 0.3, "Entertainment" to 0.3, "Other" to 0.4
     )
     private val usdPerMain: Double get() = if (mainCcy == "USD") 1.0 else (fx["USD"] ?: 0.0)
-    val carbonMonthlyKg: Double
-        get() = categoryTotals(30).sumOf { (cat, amtMain) -> amtMain * usdPerMain * (co2Factors[cat] ?: 0.4) }
+    val carbonMonthlyKg: Double get() = categoryTotals(30).sumOf { (cat, amtMain) -> amtMain * usdPerMain * (co2Factors[cat] ?: 0.4) }
     val carbonTreesYear: Double get() = carbonMonthlyKg * 12.0 / 21.77
     val carbonDrivingKm: Double get() = if (carbonMonthlyKg > 0) carbonMonthlyKg / 0.192 else 0.0
+
+    // ---- monthly spend trend (last 6 calendar months) ----
+    fun monthlyTrend(): List<Pair<String, Double>> {
+        val now = java.time.LocalDate.now()
+        val months = (0..5).map { now.minusMonths(it.toLong()).toString().take(7) }.reversed()
+        val byMonth = allSpend().filter { (it.date?.length ?: 0) >= 7 }.groupBy { it.date!!.take(7) }
+        return months.map { m -> m to (byMonth[m]?.sumOf { it.amountMain } ?: 0.0) }
+    }
 
     // ---- mutations ----
     fun addAccount(a: Account) { accounts = accounts + a; store.accounts = accounts }
     fun removeAccount(index: Int) { accounts = accounts.filterIndexed { i, _ -> i != index }; store.accounts = accounts }
     fun addHolding(h: Holding) { holdings = holdings + h; store.holdings = holdings }
     fun removeHolding(index: Int) { holdings = holdings.filterIndexed { i, _ -> i != index }; store.holdings = holdings }
+    fun addManualTx(t: ManualTx) { manualTx = manualTx + t; store.manualTx = manualTx }
+    fun removeManualTx(index: Int) { manualTx = manualTx.filterIndexed { i, _ -> i != index }; store.manualTx = manualTx }
+    fun clearUploaded() { uploadedAccounts = emptyList(); store.uploadedAccounts = uploadedAccounts }
 
     fun setCcy(c: String) { mainCcy = c; store.mainCcy = c }
     fun changeLang(l: String) { lang = l; store.lang = l }
@@ -216,10 +238,9 @@ object Repo {
     fun logout() {
         secure.clear(); store.clear()
         accounts = emptyList(); holdings = emptyList(); transactions = emptyList()
-        stmtAccounts = emptyList(); profile = null
+        stmtAccounts = emptyList(); profile = null; manualTx = emptyList(); uploadedAccounts = emptyList()
         discoveredBanks = emptyList(); statementPasswords = emptyMap()
-        budget = Budget()
-        goals = emptyList()
+        budget = Budget(); goals = emptyList()
         mainCcy = "IDR"; lang = "en"; hideAmounts = false
     }
 }

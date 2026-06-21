@@ -26,7 +26,10 @@ object Strings {
         "carbon" to "Carbon footprint · 30d", "co2_month" to "Monthly CO\u2082e",
         "trees_year" to "Trees · 1yr", "driving" to "Same as driving", "km" to "km",
         "goals" to "Goals", "add_goal" to "Add goal", "goal_name" to "Goal name",
-        "target" to "Target", "saved" to "Saved", "no_goals" to "No goals yet", "reached" to "Reached"
+        "target" to "Target", "saved" to "Saved", "no_goals" to "No goals yet", "reached" to "Reached",
+        "add_expense" to "Add expense", "amount" to "Amount", "merchant" to "Merchant",
+        "category" to "Category", "date" to "Date", "upload_statement" to "Upload statement (PDF)",
+        "uploading" to "Uploading\u2026", "scan_receipt" to "Scan receipt", "trend" to "Spending trend \u00b7 6mo"
     )
     private val id = mapOf(
         "overview" to "Ringkasan", "accounts" to "Rekening", "activity" to "Aktivitas",
@@ -53,7 +56,10 @@ object Strings {
         "carbon" to "Jejak karbon · 30h", "co2_month" to "CO\u2082e bulanan",
         "trees_year" to "Pohon · 1th", "driving" to "Setara berkendara", "km" to "km",
         "goals" to "Target", "add_goal" to "Tambah target", "goal_name" to "Nama target",
-        "target" to "Target", "saved" to "Terkumpul", "no_goals" to "Belum ada target", "reached" to "Tercapai"
+        "target" to "Target", "saved" to "Terkumpul", "no_goals" to "Belum ada target", "reached" to "Tercapai",
+        "add_expense" to "Tambah pengeluaran", "amount" to "Jumlah", "merchant" to "Merchant",
+        "category" to "Kategori", "date" to "Tanggal", "upload_statement" to "Unggah rekening koran (PDF)",
+        "uploading" to "Mengunggah\u2026", "scan_receipt" to "Pindai struk", "trend" to "Tren pengeluaran \u00b7 6bln"
     )
     fun t(key: String, lang: String): String =
         (if (lang == "id") id else en)[key] ?: en[key] ?: key

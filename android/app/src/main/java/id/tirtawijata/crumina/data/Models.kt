@@ -73,3 +73,8 @@ data class Budget(
 
 // savings goals (local)
 data class Goal(val name: String, val target: Double, val saved: Double = 0.0)
+
+// manual expense + PDF upload
+data class ManualTx(val amount: Double, val merchant: String, val category: String, val date: String, val ccy: String = "IDR")
+data class UploadReq(val pdf: String, val password: String? = null)
+data class UploadResponse(val ok: Boolean = false, val accounts: List<StmtAccount>? = null, val error: String? = null, val note: String? = null)
