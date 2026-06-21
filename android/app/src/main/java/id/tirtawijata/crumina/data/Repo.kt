@@ -79,8 +79,8 @@ object Repo {
             val api = Net.api(secure)
             fx = runCatching { api.fx(mainCcy).rates }.getOrNull() ?: emptyMap()
             runCatching { api.data().profile }.getOrNull()?.let { profile = it }
-            transactions = runCatching { api.sync().data?.transactions }.getOrNull() ?: emptyList()
-            stmtAccounts = (runCatching { api.statements().accounts }.getOrNull() ?: emptyList()).filter { it.error == null }
+            transactions = runCatching { api.sync(secure.refreshToken).data?.transactions }.getOrNull() ?: emptyList()
+            stmtAccounts = (runCatching { api.statements(secure.refreshToken, pwHeader()).accounts }.getOrNull() ?: emptyList()).filter { it.error == null }
             if (holdings.isNotEmpty()) {
                 holdings = holdings.map { h ->
                     val q = runCatching { api.quote(h.symbol) }.getOrNull()
@@ -93,7 +93,7 @@ object Repo {
     }
 
     suspend fun discover() {
-        discoveredBanks = runCatching { Net.api(secure).discoverBanks(1).banks }.getOrNull() ?: emptyList()
+        discoveredBanks = runCatching { Net.api(secure).discoverBanks(1, secure.refreshToken).banks }.getOrNull() ?: emptyList()
     }
 
     fun setStatementPassword(bank: String, pw: String) {
@@ -102,6 +102,9 @@ object Repo {
         statementPasswords = m
         secure.statementPw = if (m.isEmpty()) null else Gson().toJson(m)
     }
+
+    private fun pwHeader(): String? = secure.statementPw?.takeIf { it.isNotBlank() }
+        ?.let { android.util.Base64.encodeToString(it.toByteArray(), android.util.Base64.NO_WRAP) }
 
     suspend fun upload(pdfBase64: String, password: String?) {
         loading = true; error = null
@@ -167,10 +170,12 @@ object Repo {
     val budgetCategories = listOf("Food & Dining", "Groceries", "Transport", "Shopping", "Travel", "Bills & Subs")
 
     private fun daysAgo(date: String?): Long {
-        val d = date?.take(10) ?: return Long.MAX_VALUE
-        return try {
-            java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.parse(d), java.time.LocalDate.now())
-        } catch (e: Exception) { Long.MAX_VALUE }
+        val d = date?.trim()?.take(10) ?: return Long.MAX_VALUE
+        val parsed = runCatching { java.time.LocalDate.parse(d) }.getOrNull()
+            ?: runCatching { java.time.LocalDate.parse(d, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) }.getOrNull()
+            ?: runCatching { java.time.LocalDate.parse(d, java.time.format.DateTimeFormatter.ofPattern("MM/dd/yyyy")) }.getOrNull()
+            ?: return Long.MAX_VALUE
+        return java.time.temporal.ChronoUnit.DAYS.between(parsed, java.time.LocalDate.now())
     }
 
     private data class Spend(val category: String, val amountMain: Double, val date: String?, val merchant: String?)

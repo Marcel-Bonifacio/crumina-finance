@@ -2,8 +2,10 @@
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="crumina_secure.xml" />
+        <exclude domain="sharedpref" path="crumina_app.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="crumina_secure.xml" />
+        <exclude domain="sharedpref" path="crumina_app.xml" />
     </device-transfer>
 </data-extraction-rules>
