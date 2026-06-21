@@ -51,6 +51,11 @@ fun OverviewScreen(onSync: () -> Unit) {
         Spacer(Modifier.height(20.dp))
         Divider()
         Spacer(Modifier.height(20.dp))
+        TrendSection()
+
+        Spacer(Modifier.height(20.dp))
+        Divider()
+        Spacer(Modifier.height(20.dp))
         BudgetsSection()
 
         Spacer(Modifier.height(20.dp))

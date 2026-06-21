@@ -1,6 +1,10 @@
 package id.tirtawijata.crumina.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -257,4 +261,24 @@ private fun GoalDialog(index: Int, onDismiss: () -> Unit) {
             }
         }
     )
+}
+
+@Composable
+fun TrendSection() {
+    val r = Repo
+    val data = r.monthlyTrend()
+    val max = (data.maxOfOrNull { it.second } ?: 0.0).coerceAtLeast(1.0)
+    Text(r.t("trend"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    Spacer(Modifier.height(8.dp))
+    Row(Modifier.fillMaxWidth().height(140.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        data.forEach { (ym, amt) ->
+            val frac = (amt / max).toFloat().coerceIn(0.02f, 1f)
+            Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.Bottom, horizontalAlignment = Alignment.CenterHorizontally) {
+                Spacer(Modifier.weight((1f - frac).coerceAtLeast(0.001f)))
+                Box(Modifier.weight(frac).fillMaxWidth(0.6f).background(Green, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)))
+                Spacer(Modifier.height(4.dp))
+                Text(ym.substring(5), style = MaterialTheme.typography.bodySmall, color = Muted)
+            }
+        }
+    }
 }
