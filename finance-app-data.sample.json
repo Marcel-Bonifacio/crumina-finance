@@ -1,0 +1,179 @@
+{
+  "_note": "SAMPLE / MOCK DATA — mock data, not real accounts. Illustrates the normalized structure the app consumes. Generated 2026-06-20.",
+  "schemaVersion": "0.1",
+  "generatedAt": "2026-06-20T00:00:00Z",
+  "baseCurrency": "IDR",
+  "accounts": [
+    {
+      "id": "acc_bca_tahapan_01",
+      "institution": "Bank Central Asia",
+      "type": "bank",
+      "name": "Tahapan",
+      "numberMasked": "•••• 4321",
+      "currency": "IDR",
+      "balance": { "current": 18450000, "available": 18450000, "asOf": "2026-05-31" }
+    },
+    {
+      "id": "acc_mandiri_visa_01",
+      "institution": "Bank Mandiri",
+      "type": "credit_card",
+      "name": "Mandiri Visa Signature",
+      "numberMasked": "•••• 7788",
+      "currency": "IDR",
+      "creditCard": {
+        "statementBalance": 8230500,
+        "minimumPayment": 411525,
+        "paymentDueDate": "2026-06-18",
+        "creditLimit": 50000000,
+        "availableCredit": 41769500,
+        "statementDate": "2026-05-28"
+      }
+    },
+    {
+      "id": "acc_bibit_01",
+      "institution": "Bibit (PT Bibit Tumbuh Bersama)",
+      "type": "investment",
+      "name": "Reksa Dana & Saham",
+      "numberMasked": "•••• 0099",
+      "currency": "IDR",
+      "investment": {
+        "totalMarketValue": 76250000,
+        "totalCost": 68000000,
+        "unrealizedPnL": 8250000,
+        "cash": 1200000,
+        "asOf": "2026-05-31"
+      }
+    }
+  ],
+  "transactions": [
+    {
+      "id": "txn_0001",
+      "accountId": "acc_bca_tahapan_01",
+      "date": "2026-05-03",
+      "description": "GAJI / PAYROLL",
+      "merchant": "Employer Payroll",
+      "amount": 22000000,
+      "type": "credit",
+      "category": "Income",
+      "balanceAfter": 24100000,
+      "raw": "CR TRSF E-BANKING 0305/FTSCY/WS95051 PAYROLL"
+    },
+    {
+      "id": "txn_0002",
+      "accountId": "acc_bca_tahapan_01",
+      "date": "2026-05-14",
+      "description": "TOKOPEDIA",
+      "merchant": "Tokopedia",
+      "amount": -350000,
+      "type": "debit",
+      "category": "Shopping",
+      "balanceAfter": 21300000,
+      "raw": "DB QR 1405/IDXXXXX TOKOPEDIA"
+    },
+    {
+      "id": "txn_0003",
+      "accountId": "acc_bca_tahapan_01",
+      "date": "2026-05-25",
+      "description": "PLN POSTPAID",
+      "merchant": "PLN",
+      "amount": -680000,
+      "type": "debit",
+      "category": "Bills & Utilities",
+      "balanceAfter": 18450000,
+      "raw": "DB AUTODEBET PLN 25/05"
+    },
+    {
+      "id": "txn_0101",
+      "accountId": "acc_mandiri_visa_01",
+      "date": "2026-05-12",
+      "description": "GARUDA INDONESIA",
+      "merchant": "Garuda Indonesia",
+      "amount": -2750000,
+      "type": "debit",
+      "category": "Travel",
+      "balanceAfter": null,
+      "raw": "GARUDA INDONESIA JKTCGK 12 MAY"
+    },
+    {
+      "id": "txn_0102",
+      "accountId": "acc_mandiri_visa_01",
+      "date": "2026-05-20",
+      "description": "GRABFOOD",
+      "merchant": "Grab",
+      "amount": -185000,
+      "type": "debit",
+      "category": "Food & Dining",
+      "balanceAfter": null,
+      "raw": "GRAB* FOOD 20MAY"
+    }
+  ],
+  "holdings": [
+    {
+      "id": "hold_0001",
+      "accountId": "acc_bibit_01",
+      "symbol": "BBCA",
+      "name": "Bank Central Asia Tbk",
+      "assetClass": "equity",
+      "quantity": 2000,
+      "avgCost": 9000,
+      "lastPrice": 9750,
+      "marketValue": 19500000,
+      "unrealizedPnL": 1500000,
+      "currency": "IDR"
+    },
+    {
+      "id": "hold_0002",
+      "accountId": "acc_bibit_01",
+      "symbol": "SCHRODER-DPL",
+      "name": "Schroder Dana Prestasi Plus",
+      "assetClass": "mutual_fund",
+      "quantity": 12000,
+      "avgCost": 3800,
+      "lastPrice": 4200,
+      "marketValue": 50400000,
+      "unrealizedPnL": 4800000,
+      "currency": "IDR"
+    },
+    {
+      "id": "hold_0003",
+      "accountId": "acc_bibit_01",
+      "symbol": "CASH",
+      "name": "Uncommitted cash",
+      "assetClass": "cash",
+      "quantity": 1200000,
+      "avgCost": 1,
+      "lastPrice": 1,
+      "marketValue": 1200000,
+      "unrealizedPnL": 0,
+      "currency": "IDR"
+    }
+  ],
+  "statements": [
+    {
+      "id": "stmt_0001",
+      "accountId": "acc_bca_tahapan_01",
+      "periodStart": "2026-05-01",
+      "periodEnd": "2026-05-31",
+      "statementDate": "2026-05-31",
+      "source": {
+        "emailId": "<gmail-message-id>",
+        "emailFrom": "no-reply@bca.co.id",
+        "fileName": "BCA_eStatement_May2026.pdf",
+        "parsedAt": "2026-06-20T00:00:00Z"
+      }
+    },
+    {
+      "id": "stmt_0002",
+      "accountId": "acc_mandiri_visa_01",
+      "periodStart": "2026-04-29",
+      "periodEnd": "2026-05-28",
+      "statementDate": "2026-05-28",
+      "source": {
+        "emailId": "<gmail-message-id>",
+        "emailFrom": "creditcard@bankmandiri.co.id",
+        "fileName": "Mandiri_CC_Statement_May2026.pdf",
+        "parsedAt": "2026-06-20T00:00:00Z"
+      }
+    }
+  ]
+}
