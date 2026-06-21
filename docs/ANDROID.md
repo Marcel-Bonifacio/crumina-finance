@@ -235,6 +235,23 @@ it afterward; the keystore is never committed.
   declaration: read-only mailbox access, finances stored on device/your server, no
   third-party analytics.
 
+## Deploying crumina.tirtawijata.com
+
+The native app points at `https://crumina.tirtawijata.com`, so that origin must serve the
+existing `app/` (same code as the web deploy) with these set:
+
+- **Env vars:** `SESSION_SECRET`, `TOKEN_ENC_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+  and `GOOGLE_REDIRECT_URI=https://crumina.tirtawijata.com/api/auth/callback`.
+- **Google console:** add `https://crumina.tirtawijata.com/api/auth/callback` to the
+  OAuth client's authorized redirect URIs.
+- **Asset Links:** `app/.well-known/assetlinks.json` is served at
+  `/.well-known/assetlinks.json`. Replace `REPLACE_WITH_RELEASE_SHA256` with your release
+  signing SHA-256 (`keytool -list -v -keystore crumina-release.jks -alias crumina | grep SHA256`,
+  or copy it from Play Console -> App signing). Until this matches, App Link verification
+  fails and sign-in falls back to the browser page at `app/auth/android.html`.
+- **Verify:** after deploy, `curl https://crumina.tirtawijata.com/.well-known/assetlinks.json`
+  should return the JSON, and Android verifies the link on install.
+
 ## Scope: foundation vs. next
 
 This draft delivers the **secure foundation**: the auth redesign, Keystore-backed token
