@@ -65,8 +65,8 @@ satisfy the AGPL's source-offer requirement.
 
 | Where | Placeholder | Replace with |
 |---|---|---|
-| `app/privacy.html` | `crumina.example.com`, `privacy@example.com` | your domain and contact email |
-| `app/terms.html` | `crumina.example.com`, `privacy@example.com` | your domain and contact email |
+| `app/privacy.html` | `crumina.example.com`, `contact@tirtawijata.com` | your domain and contact email |
+| `app/terms.html` | `crumina.example.com`, `contact@tirtawijata.com` | your domain and contact email |
 | `app/app.js` | `REPO = 'https://github.com/your-org/crumina'` | the URL where you publish your source |
 | `brand/`, `app/brand/` | the Crumina logo and icons | your own marks, if you rebrand |
 
