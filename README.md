@@ -12,6 +12,7 @@
   <img alt="PWA installable" src="https://img.shields.io/badge/PWA-installable-0A1B3D">
   <img alt="No build step" src="https://img.shields.io/badge/build-none-2FE0C2">
   <img alt="Languages EN and ID" src="https://img.shields.io/badge/i18n-EN%20%7C%20ID-0A1B3D">
+  <img alt="Android native app" src="https://img.shields.io/badge/Android-native%20app-2FE0C2">
 </p>
 
 ---
@@ -25,6 +26,10 @@ over IMAP, or skip accounts entirely and keep everything on one device.
 It installs as a Progressive Web App, works offline once it has synced, and is
 available in English and Bahasa Indonesia.
 
+A native Android app is also available: download the signed APK from the
+[Releases](https://github.com/Marcel-Bonifacio/crumina-finance/releases) page, or build it
+from the `android/` project.
+
 > **Status:** beta. The parsing covers a set of bank layouts out of the box and falls
 > back to generic patterns for the rest; see [Supported statements](#supported-statements).
 
@@ -37,6 +42,7 @@ available in English and Bahasa Indonesia.
 - [Supported statements](#supported-statements)
 - [Project structure](#project-structure)
 - [Tech stack](#tech-stack)
+- [Android app](#android-app)
 - [Documentation](#documentation)
 - [Security and privacy](#security-and-privacy)
 - [Contributing](#contributing)
@@ -107,8 +113,8 @@ You need Node 18 or newer. The client has no build step, so there is nothing to
 compile.
 
 ```bash
-git clone https://github.com/your-org/crumina.git
-cd crumina/app
+git clone https://github.com/Marcel-Bonifacio/crumina-finance.git
+cd crumina-finance/app
 npm ci --omit=dev          # installs the PDF and IMAP libraries
 
 cd ../selfhost
@@ -177,7 +183,8 @@ app/                 the deployable web app
   vendor/tesseract/  on-device OCR assets
   brand/             logos and icons
 selfhost/            server.js, Dockerfile, compose, Caddy, systemd unit
-docs/                architecture, configuration, self-hosting, security, API
+android/             native Android app (Kotlin, Jetpack Compose)
+docs/                architecture, configuration, self-hosting, security, API, Android
 brand/               logo and icon assets
 ```
 
@@ -188,7 +195,18 @@ server is plain Node: serverless-style `(req, res)` handlers that also run behin
 small built-in HTTP server for self-hosting. PDF text extraction uses `pdfjs-dist`,
 IMAP uses `imapflow` and `mailparser`, and receipt OCR uses a bundled build of
 Tesseract that runs in the browser. State persists in the browser; the server keeps no
-transaction database.
+transaction database. The Android app is native Kotlin and Jetpack Compose, using
+Retrofit for the same API and ML Kit for on-device receipt OCR.
+
+## Android app
+
+The native Android client is Kotlin with Jetpack Compose, talking to the same backend
+over the session API. It covers the same ground as the web app: net worth, accounts,
+activity, portfolio with live quotes, statement unlock, insights, budgets, recurring
+payments, goals, a spending trend, and on-device receipt OCR, in English and Bahasa
+Indonesia. CI builds and signs the APK and attaches it to each release. The architecture,
+the authentication flow, and the build and signing steps are in
+[docs/ANDROID.md](docs/ANDROID.md).
 
 ## Documentation
 
@@ -199,6 +217,7 @@ transaction database.
 | [Self-hosting](docs/SELF-HOSTING.md) | Running your own instance, with or without Docker |
 | [Bank parsers](docs/BANK-PARSERS.md) | Adding or changing a supported institution |
 | [API reference](docs/API.md) | Endpoints and their contracts |
+| [Android](docs/ANDROID.md) | Native app: architecture, auth, build and signing |
 | [Security](docs/SECURITY.md) | Threat model, cryptography, disclosure |
 | [Contributing](CONTRIBUTING.md) | Development setup and conventions |
 
