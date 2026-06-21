@@ -1,5 +1,6 @@
 package id.tirtawijata.crumina.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -151,6 +152,108 @@ private fun BudgetDialog(onDismiss: () -> Unit) {
                 r.budgetCategories.forEach { c ->
                     OutlinedTextField(value = catInputs[c] ?: "", onValueChange = { catInputs[c] = it }, label = { Text(c) }, singleLine = true)
                 }
+            }
+        }
+    )
+}
+
+@Composable
+fun RecurringSection() {
+    val r = Repo
+    val rec = r.recurring().take(8)
+    Text(r.t("recurring"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    Spacer(Modifier.height(8.dp))
+    if (rec.isEmpty()) {
+        Text(r.t("no_recurring"), color = Muted)
+    } else {
+        rec.forEach { (merchant, amt) ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(merchant, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                Spacer(Modifier.height(0.dp))
+                Text(r.money(amt), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+@Composable
+fun CarbonSection() {
+    val r = Repo
+    Text(r.t("carbon"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    Spacer(Modifier.height(8.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        StatCard(r.t("co2_month"), String.format(java.util.Locale.US, "%,.0f kg", r.carbonMonthlyKg))
+        StatCard(r.t("trees_year"), String.format(java.util.Locale.US, "%.1f", r.carbonTreesYear))
+    }
+    Spacer(Modifier.height(8.dp))
+    Text(
+        r.t("driving") + ": " + String.format(java.util.Locale.US, "%,.0f", r.carbonDrivingKm) + " " + r.t("km"),
+        style = MaterialTheme.typography.bodySmall, color = Muted
+    )
+}
+
+@Composable
+fun GoalsSection() {
+    val r = Repo
+    var dialog by remember { mutableStateOf<Int?>(null) }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(r.t("goals"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        TextButton(onClick = { dialog = -1 }) { Text(r.t("add_goal")) }
+    }
+    if (r.goals.isEmpty()) {
+        Text(r.t("no_goals"), color = Muted)
+    } else {
+        r.goals.forEachIndexed { i, g ->
+            val frac = if (g.target > 0.0) (g.saved / g.target).toFloat().coerceIn(0f, 1f) else 0f
+            Column(
+                Modifier.fillMaxWidth().clickable { dialog = i }.padding(vertical = 6.dp)
+            ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(g.name, style = MaterialTheme.typography.bodyMedium)
+                    Text(r.money(g.saved) + " / " + r.money(g.target), style = MaterialTheme.typography.bodySmall, color = Muted)
+                }
+                Spacer(Modifier.height(4.dp))
+                LinearProgressIndicator(progress = frac, modifier = Modifier.fillMaxWidth())
+                if (g.target > 0.0 && g.saved >= g.target) {
+                    Text(r.t("reached"), style = MaterialTheme.typography.bodySmall, color = Green)
+                }
+            }
+        }
+    }
+    dialog?.let { idx -> GoalDialog(idx, onDismiss = { dialog = null }) }
+}
+
+@Composable
+private fun GoalDialog(index: Int, onDismiss: () -> Unit) {
+    val r = Repo
+    val existing = if (index >= 0) r.goals.getOrNull(index) else null
+    var name by remember { mutableStateOf(existing?.name ?: "") }
+    var target by remember { mutableStateOf(existing?.target?.let { if (it > 0.0) it.toLong().toString() else "" } ?: "") }
+    var saved by remember { mutableStateOf(existing?.saved?.let { if (it > 0.0) it.toLong().toString() else "" } ?: "") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                enabled = name.isNotBlank(),
+                onClick = {
+                    val g = id.tirtawijata.crumina.data.Goal(name.trim(), target.toDoubleOrNull() ?: 0.0, saved.toDoubleOrNull() ?: 0.0)
+                    if (index >= 0) r.updateGoal(index, g) else r.addGoal(g)
+                    onDismiss()
+                }
+            ) { Text(r.t("save")) }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (index >= 0) TextButton(onClick = { r.removeGoal(index); onDismiss() }) { Text(r.t("remove")) }
+                TextButton(onClick = onDismiss) { Text(r.t("cancel")) }
+            }
+        },
+        title = { Text(r.t("add_goal")) },
+        text = {
+            Column {
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(r.t("goal_name")) }, singleLine = true)
+                OutlinedTextField(value = target, onValueChange = { target = it }, label = { Text(r.t("target")) }, singleLine = true)
+                OutlinedTextField(value = saved, onValueChange = { saved = it }, label = { Text(r.t("saved")) }, singleLine = true)
             }
         }
     )

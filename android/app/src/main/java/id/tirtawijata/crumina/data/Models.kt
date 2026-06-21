@@ -70,3 +70,6 @@ data class Budget(
     val overall: Double = 0.0,
     val cats: Map<String, Double> = emptyMap()
 )
+
+// savings goals (local)
+data class Goal(val name: String, val target: Double, val saved: Double = 0.0)

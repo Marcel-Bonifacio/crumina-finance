@@ -54,5 +54,12 @@ class Store(context: Context) {
         } ?: Budget()
         set(v) { prefs.edit().putString("budget", gson.toJson(v)).apply() }
 
+    private val goalType = object : TypeToken<List<Goal>>() {}.type
+    var goals: List<Goal>
+        get() = prefs.getString("goals", null)?.let {
+            runCatching { gson.fromJson<List<Goal>>(it, goalType) }.getOrNull()
+        } ?: emptyList()
+        set(v) { prefs.edit().putString("goals", gson.toJson(v)).apply() }
+
     fun clear() = prefs.edit().clear().apply()
 }

@@ -56,6 +56,21 @@ fun OverviewScreen(onSync: () -> Unit) {
         Spacer(Modifier.height(20.dp))
         Divider()
         Spacer(Modifier.height(20.dp))
+        RecurringSection()
+
+        Spacer(Modifier.height(20.dp))
+        Divider()
+        Spacer(Modifier.height(20.dp))
+        CarbonSection()
+
+        Spacer(Modifier.height(20.dp))
+        Divider()
+        Spacer(Modifier.height(20.dp))
+        GoalsSection()
+
+        Spacer(Modifier.height(20.dp))
+        Divider()
+        Spacer(Modifier.height(20.dp))
         Text(r.t("recent"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(4.dp))
         val feed = r.feed.take(12)

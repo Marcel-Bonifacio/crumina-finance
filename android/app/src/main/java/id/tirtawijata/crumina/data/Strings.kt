@@ -20,7 +20,13 @@ object Strings {
         "transactions" to "Transactions", "where_goes" to "Where it goes · 30d",
         "budgets" to "Budgets", "set_budgets" to "Set budgets", "overall" to "Overall",
         "period" to "Period", "weekly" to "Weekly", "monthly" to "Monthly",
-        "left" to "left", "over" to "over by", "no_budgets" to "No budgets set"
+        "left" to "left", "over" to "over by",
+        "no_budgets" to "No budgets set",
+        "recurring" to "Recurring", "no_recurring" to "No recurring payments yet",
+        "carbon" to "Carbon footprint · 30d", "co2_month" to "Monthly CO\u2082e",
+        "trees_year" to "Trees · 1yr", "driving" to "Same as driving", "km" to "km",
+        "goals" to "Goals", "add_goal" to "Add goal", "goal_name" to "Goal name",
+        "target" to "Target", "saved" to "Saved", "no_goals" to "No goals yet", "reached" to "Reached"
     )
     private val id = mapOf(
         "overview" to "Ringkasan", "accounts" to "Rekening", "activity" to "Aktivitas",
@@ -41,7 +47,13 @@ object Strings {
         "transactions" to "Transaksi", "where_goes" to "Ke mana perginya · 30h",
         "budgets" to "Anggaran", "set_budgets" to "Atur anggaran", "overall" to "Total",
         "period" to "Periode", "weekly" to "Mingguan", "monthly" to "Bulanan",
-        "left" to "tersisa", "over" to "lebih", "no_budgets" to "Belum ada anggaran"
+        "left" to "tersisa", "over" to "lebih",
+        "no_budgets" to "Belum ada anggaran",
+        "recurring" to "Berulang", "no_recurring" to "Belum ada pembayaran berulang",
+        "carbon" to "Jejak karbon · 30h", "co2_month" to "CO\u2082e bulanan",
+        "trees_year" to "Pohon · 1th", "driving" to "Setara berkendara", "km" to "km",
+        "goals" to "Target", "add_goal" to "Tambah target", "goal_name" to "Nama target",
+        "target" to "Target", "saved" to "Terkumpul", "no_goals" to "Belum ada target", "reached" to "Tercapai"
     )
     fun t(key: String, lang: String): String =
         (if (lang == "id") id else en)[key] ?: en[key] ?: key

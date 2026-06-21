@@ -36,6 +36,7 @@ object Repo {
     var discoveredBanks by mutableStateOf<List<BankSlot>>(emptyList())
     var statementPasswords by mutableStateOf<Map<String, String>>(emptyMap())
     var budget by mutableStateOf(Budget())
+    var goals by mutableStateOf<List<Goal>>(emptyList())
 
     var loading by mutableStateOf(false)
     var error by mutableStateOf<String?>(null)
@@ -51,6 +52,7 @@ object Repo {
             runCatching { Gson().fromJson<Map<String, String>>(it, mapType) }.getOrNull()
         } ?: emptyMap()
         budget = store.budget
+        goals = store.goals
         ready = true
     }
 
@@ -176,6 +178,25 @@ object Repo {
     val biggest30: Double get() = spendTxWithin(30).maxOfOrNull { conv(abs(it.amount), "IDR") } ?: 0.0
     val count30: Int get() = spendTxWithin(30).size
 
+    // recurring: a synced merchant seen 2+ times (avg amount in main currency)
+    fun recurring(): List<Pair<String, Double>> =
+        transactions.filter { (it.cls == "spend" || it.cls == "fee") && !it.merchant.isNullOrBlank() }
+            .groupBy { it.merchant!!.trim() }
+            .filter { it.value.size >= 2 }
+            .map { (m, list) -> m to list.map { conv(abs(it.amount), "IDR") }.average() }
+            .sortedByDescending { it.second }
+
+    // carbon: rough kg CO2e per USD spent, by category
+    private val co2Factors = mapOf(
+        "Food & Dining" to 0.4, "Groceries" to 0.5, "Transport" to 0.6, "Travel" to 1.1,
+        "Shopping" to 0.5, "Bills & Subs" to 0.3, "Health" to 0.3, "Entertainment" to 0.3, "Other" to 0.4
+    )
+    private val usdPerMain: Double get() = if (mainCcy == "USD") 1.0 else (fx["USD"] ?: 0.0)
+    val carbonMonthlyKg: Double
+        get() = categoryTotals(30).sumOf { (cat, amtMain) -> amtMain * usdPerMain * (co2Factors[cat] ?: 0.4) }
+    val carbonTreesYear: Double get() = carbonMonthlyKg * 12.0 / 21.77
+    val carbonDrivingKm: Double get() = if (carbonMonthlyKg > 0) carbonMonthlyKg / 0.192 else 0.0
+
     // ---- mutations ----
     fun addAccount(a: Account) { accounts = accounts + a; store.accounts = accounts }
     fun removeAccount(index: Int) { accounts = accounts.filterIndexed { i, _ -> i != index }; store.accounts = accounts }
@@ -186,6 +207,9 @@ object Repo {
     fun changeLang(l: String) { lang = l; store.lang = l }
     fun toggleHide() { hideAmounts = !hideAmounts; store.hideAmounts = hideAmounts }
     fun saveBudget(b: Budget) { budget = b; store.budget = b }
+    fun addGoal(g: Goal) { goals = goals + g; store.goals = goals }
+    fun updateGoal(index: Int, g: Goal) { goals = goals.mapIndexed { i, old -> if (i == index) g else old }; store.goals = goals }
+    fun removeGoal(index: Int) { goals = goals.filterIndexed { i, _ -> i != index }; store.goals = goals }
 
     fun t(key: String) = Strings.t(key, lang)
 
@@ -195,6 +219,7 @@ object Repo {
         stmtAccounts = emptyList(); profile = null
         discoveredBanks = emptyList(); statementPasswords = emptyMap()
         budget = Budget()
+        goals = emptyList()
         mainCcy = "IDR"; lang = "en"; hideAmounts = false
     }
 }
