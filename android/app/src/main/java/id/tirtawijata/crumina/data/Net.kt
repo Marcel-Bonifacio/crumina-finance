@@ -13,6 +13,11 @@ object Net {
                 val builder = chain.request().newBuilder()
                 store.session?.let { builder.header("Authorization", "Bearer $it") }
                 store.refreshToken?.let { builder.header("X-Cr-Rt", it) }
+                store.statementPw?.let {
+                    if (it.isNotBlank()) {
+                        builder.header("X-Cr-Pw", android.util.Base64.encodeToString(it.toByteArray(), android.util.Base64.NO_WRAP))
+                    }
+                }
                 chain.proceed(builder.build())
             })
             .build()

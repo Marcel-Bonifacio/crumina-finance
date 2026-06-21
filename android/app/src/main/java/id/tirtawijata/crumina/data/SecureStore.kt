@@ -4,10 +4,7 @@ import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
-/**
- * Token storage backed by the Android Keystore. The underlying file
- * (crumina_secure.xml) is excluded from cloud backup and device transfer.
- */
+/** Keystore-backed storage for session token, Gmail refresh token, and statement passwords. */
 class SecureStore(context: Context) {
 
     private val masterKey = MasterKey.Builder(context)
@@ -23,23 +20,18 @@ class SecureStore(context: Context) {
     )
 
     var session: String?
-        get() = prefs.getString(KEY_SESSION, null)
-        set(value) = prefs.edit().apply {
-            if (value == null) remove(KEY_SESSION) else putString(KEY_SESSION, value)
-        }.apply()
+        get() = prefs.getString("session", null)
+        set(value) = prefs.edit().apply { if (value == null) remove("session") else putString("session", value) }.apply()
 
     var refreshToken: String?
-        get() = prefs.getString(KEY_RT, null)
-        set(value) = prefs.edit().apply {
-            if (value == null) remove(KEY_RT) else putString(KEY_RT, value)
-        }.apply()
+        get() = prefs.getString("rt", null)
+        set(value) = prefs.edit().apply { if (value == null) remove("rt") else putString("rt", value) }.apply()
+
+    var statementPw: String?
+        get() = prefs.getString("stmtpw", null)
+        set(value) = prefs.edit().apply { if (value == null) remove("stmtpw") else putString("stmtpw", value) }.apply()
 
     val isLoggedIn: Boolean get() = session != null
 
     fun clear() = prefs.edit().clear().apply()
-
-    private companion object {
-        const val KEY_SESSION = "session"
-        const val KEY_RT = "rt"
-    }
 }

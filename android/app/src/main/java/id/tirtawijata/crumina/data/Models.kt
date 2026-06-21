@@ -59,3 +59,7 @@ data class Holding(
     val price: Double = 0.0,
     val ccy: String = "USD"
 )
+
+// statement-unlock discovery
+data class BankSlot(val key: String? = null, val institution: String? = null)
+data class DiscoverResponse(val ok: Boolean = false, val banks: List<BankSlot>? = null)

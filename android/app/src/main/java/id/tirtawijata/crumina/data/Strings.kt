@@ -12,7 +12,10 @@ object Strings {
         "sync" to "Sync from email", "syncing" to "Syncing…", "language" to "Language",
         "hide_amounts" to "Hide amounts", "log_out" to "Log out", "signed_in" to "Signed in as",
         "save" to "Save", "cancel" to "Cancel", "remove" to "Remove", "from_statements" to "From your statements",
-        "no_accounts" to "No accounts yet", "no_holdings" to "No holdings yet", "spent_30" to "Spent · 30d"
+        "no_accounts" to "No accounts yet", "no_holdings" to "No holdings yet", "spent_30" to "Spent · 30d",
+        "statement_unlock" to "Statement unlock", "password" to "Password",
+        "none_found" to "No protected statements found", "done" to "Done", "set" to "Set",
+        "checking" to "Checking your email…"
     )
     private val id = mapOf(
         "overview" to "Ringkasan", "accounts" to "Rekening", "activity" to "Aktivitas",
@@ -25,7 +28,10 @@ object Strings {
         "sync" to "Sinkron dari email", "syncing" to "Menyinkronkan…", "language" to "Bahasa",
         "hide_amounts" to "Sembunyikan nominal", "log_out" to "Keluar", "signed_in" to "Masuk sebagai",
         "save" to "Simpan", "cancel" to "Batal", "remove" to "Hapus", "from_statements" to "Dari rekening koran",
-        "no_accounts" to "Belum ada rekening", "no_holdings" to "Belum ada investasi", "spent_30" to "Pengeluaran · 30h"
+        "no_accounts" to "Belum ada rekening", "no_holdings" to "Belum ada investasi", "spent_30" to "Pengeluaran · 30h",
+        "statement_unlock" to "Buka kunci rekening koran", "password" to "Kata sandi",
+        "none_found" to "Tidak ada rekening koran terkunci", "done" to "Selesai", "set" to "Simpan",
+        "checking" to "Memeriksa email…"
     )
     fun t(key: String, lang: String): String =
         (if (lang == "id") id else en)[key] ?: en[key] ?: key

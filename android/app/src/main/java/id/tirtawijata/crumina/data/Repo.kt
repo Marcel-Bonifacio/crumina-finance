@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.abs
@@ -14,6 +15,7 @@ object Repo {
     private lateinit var store: Store
     private lateinit var secure: SecureStore
     private var ready = false
+    private val mapType = object : TypeToken<Map<String, String>>() {}.type
 
     // settings
     var mainCcy by mutableStateOf("IDR")
@@ -30,6 +32,10 @@ object Repo {
     var transactions by mutableStateOf<List<Txn>>(emptyList())
     var fx by mutableStateOf<Map<String, Double>>(emptyMap())
 
+    // statement unlock
+    var discoveredBanks by mutableStateOf<List<BankSlot>>(emptyList())
+    var statementPasswords by mutableStateOf<Map<String, String>>(emptyMap())
+
     var loading by mutableStateOf(false)
     var error by mutableStateOf<String?>(null)
 
@@ -40,6 +46,9 @@ object Repo {
         mainCcy = store.mainCcy; lang = store.lang; hideAmounts = store.hideAmounts
         accounts = store.accounts; holdings = store.holdings
         store.profileJson?.let { profile = runCatching { Gson().fromJson(it, Profile::class.java) }.getOrNull() }
+        statementPasswords = secure.statementPw?.let {
+            runCatching { Gson().fromJson<Map<String, String>>(it, mapType) }.getOrNull()
+        } ?: emptyMap()
         ready = true
     }
 
@@ -75,6 +84,17 @@ object Repo {
             error = e.message ?: "Sync failed"
         }
         loading = false
+    }
+
+    suspend fun discover() {
+        discoveredBanks = runCatching { Net.api(secure).discoverBanks(1).banks }.getOrNull() ?: emptyList()
+    }
+
+    fun setStatementPassword(bank: String, pw: String) {
+        val m = statementPasswords.toMutableMap()
+        if (pw.isBlank()) m.remove(bank) else m[bank] = pw
+        statementPasswords = m
+        secure.statementPw = if (m.isEmpty()) null else Gson().toJson(m)
     }
 
     // ---- money ----
@@ -144,6 +164,7 @@ object Repo {
         secure.clear(); store.clear()
         accounts = emptyList(); holdings = emptyList(); transactions = emptyList()
         stmtAccounts = emptyList(); profile = null
+        discoveredBanks = emptyList(); statementPasswords = emptyMap()
         mainCcy = "IDR"; lang = "en"; hideAmounts = false
     }
 }
