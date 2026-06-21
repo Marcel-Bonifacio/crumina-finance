@@ -133,7 +133,7 @@ private fun BudgetDialog(onDismiss: () -> Unit) {
         confirmButton = {
             TextButton(onClick = {
                 val cats = r.budgetCategories.associateWith { (catInputs[it]?.toDoubleOrNull() ?: 0.0) }.filter { it.value > 0.0 }
-                r.setBudget(Budget(period, overall.toDoubleOrNull() ?: 0.0, cats))
+                r.saveBudget(Budget(period, overall.toDoubleOrNull() ?: 0.0, cats))
                 onDismiss()
             }) { Text(r.t("save")) }
         },

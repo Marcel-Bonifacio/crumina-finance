@@ -185,7 +185,7 @@ object Repo {
     fun setCcy(c: String) { mainCcy = c; store.mainCcy = c }
     fun changeLang(l: String) { lang = l; store.lang = l }
     fun toggleHide() { hideAmounts = !hideAmounts; store.hideAmounts = hideAmounts }
-    fun setBudget(b: Budget) { budget = b; store.budget = b }
+    fun saveBudget(b: Budget) { budget = b; store.budget = b }
 
     fun t(key: String) = Strings.t(key, lang)
 
