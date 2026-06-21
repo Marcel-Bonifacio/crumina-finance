@@ -7,7 +7,8 @@ async function valid(token){
     const [body,sig]=String(token).split('.'); if(!body||!sig) return false;
     const k=await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
     const mac=await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(body));
-    if(bytesToB64url(mac)!==sig) return false;
+    const got=bytesToB64url(mac); if(got.length!==sig.length) return false;
+    let diff=0; for(let i=0;i<got.length;i++) diff|=got.charCodeAt(i)^sig.charCodeAt(i); if(diff!==0) return false;
     const o=JSON.parse(new TextDecoder().decode(b64urlToBytes(body)));
     return (Date.now()-o.t) <= 30*864e5;
   }catch(e){ return false; }
