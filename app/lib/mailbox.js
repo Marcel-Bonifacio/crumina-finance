@@ -90,7 +90,7 @@ async function getMailbox(req){
     var enc=getCookie(req,'cr_imap');
     if(enc){ try{ var c=JSON.parse(decrypt(enc)); if(c&&c.host&&c.user&&c.pass) return imapMailbox(c); }catch(e){} }
   }
-  var rt=getCookie(req,'tally_rt');
+  var rt=getCookie(req,'tally_rt') || (req.headers && req.headers['x-cr-rt']);
   if(rt){ try{ var at=await require('./google').refresh(decrypt(rt)); return gmailMailbox(at); }catch(e){ return null; } }
   return null;
 }

@@ -16,5 +16,8 @@ function verify(token){
 }
 function cookie(name,val,maxAge){ return `${name}=${val}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`; }
 function getCookie(req,name){ const c=req.headers.cookie||''; const m=c.split(';').map(s=>s.trim()).find(s=>s.startsWith(name+'=')); return m?m.slice(name.length+1):null; }
-function fromReq(req){ const v=getCookie(req,'tally_session'); return v?verify(v):null; }
-module.exports={sign,verify,cookie,getCookie,fromReq};
+// Native clients have no cookies: they send the same signed session as a Bearer token.
+// Web keeps using the HttpOnly cookie. Either path feeds the same verify().
+function bearer(req){ const h=(req.headers&&(req.headers.authorization||req.headers.Authorization))||''; const m=/^Bearer\s+(.+)$/i.exec(String(h)); return m?m[1].trim():null; }
+function fromReq(req){ const v=getCookie(req,'tally_session')||bearer(req); return v?verify(v):null; }
+module.exports={sign,verify,cookie,getCookie,bearer,fromReq};
