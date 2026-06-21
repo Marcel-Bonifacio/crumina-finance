@@ -135,7 +135,7 @@ object Repo {
     fun removeHolding(index: Int) { holdings = holdings.filterIndexed { i, _ -> i != index }; store.holdings = holdings }
 
     fun setCcy(c: String) { mainCcy = c; store.mainCcy = c }
-    fun setLang(l: String) { lang = l; store.lang = l }
+    fun changeLang(l: String) { lang = l; store.lang = l }
     fun toggleHide() { hideAmounts = !hideAmounts; store.hideAmounts = hideAmounts }
 
     fun t(key: String) = Strings.t(key, lang)

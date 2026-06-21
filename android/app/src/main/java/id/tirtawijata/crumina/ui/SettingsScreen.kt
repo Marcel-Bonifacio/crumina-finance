@@ -45,8 +45,8 @@ fun SettingsScreen(onLogout: () -> Unit, onSync: () -> Unit) {
         Text(r.t("language"), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = r.lang == "en", onClick = { r.setLang("en") }, label = { Text("EN") })
-            FilterChip(selected = r.lang == "id", onClick = { r.setLang("id") }, label = { Text("ID") })
+            FilterChip(selected = r.lang == "en", onClick = { r.changeLang("en") }, label = { Text("EN") })
+            FilterChip(selected = r.lang == "id", onClick = { r.changeLang("id") }, label = { Text("ID") })
         }
         Spacer(Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
