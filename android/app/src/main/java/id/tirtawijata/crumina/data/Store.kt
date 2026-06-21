@@ -48,5 +48,11 @@ class Store(context: Context) {
         } ?: emptyList()
         set(v) { prefs.edit().putString("holdings", gson.toJson(v)).apply() }
 
+    var budget: Budget
+        get() = prefs.getString("budget", null)?.let {
+            runCatching { gson.fromJson(it, Budget::class.java) }.getOrNull()
+        } ?: Budget()
+        set(v) { prefs.edit().putString("budget", gson.toJson(v)).apply() }
+
     fun clear() = prefs.edit().clear().apply()
 }

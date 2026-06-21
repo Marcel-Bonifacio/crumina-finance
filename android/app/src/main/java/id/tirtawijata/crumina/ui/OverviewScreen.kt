@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,10 +39,26 @@ fun OverviewScreen(onSync: () -> Unit) {
             Spacer(Modifier.height(8.dp))
             Text(it, color = Color(0xFFE0476A), style = MaterialTheme.typography.bodySmall)
         }
+
+        Spacer(Modifier.height(20.dp))
+        InsightsSection()
+
+        Spacer(Modifier.height(20.dp))
+        Divider()
+        Spacer(Modifier.height(20.dp))
+        WhereItGoes()
+
+        Spacer(Modifier.height(20.dp))
+        Divider()
+        Spacer(Modifier.height(20.dp))
+        BudgetsSection()
+
+        Spacer(Modifier.height(20.dp))
+        Divider()
         Spacer(Modifier.height(20.dp))
         Text(r.t("recent"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(4.dp))
-        val feed = r.feed.take(15)
+        val feed = r.feed.take(12)
         if (feed.isEmpty()) Text(r.t("no_tx"), color = Color(0xFF7A8AA0))
         else feed.forEach { TxRow(it) }
     }

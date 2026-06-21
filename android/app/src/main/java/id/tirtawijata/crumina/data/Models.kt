@@ -63,3 +63,10 @@ data class Holding(
 // statement-unlock discovery
 data class BankSlot(val key: String? = null, val institution: String? = null)
 data class DiscoverResponse(val ok: Boolean = false, val banks: List<BankSlot>? = null)
+
+// budgets
+data class Budget(
+    val period: String = "monthly",
+    val overall: Double = 0.0,
+    val cats: Map<String, Double> = emptyMap()
+)

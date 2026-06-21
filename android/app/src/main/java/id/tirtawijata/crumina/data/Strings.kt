@@ -15,7 +15,12 @@ object Strings {
         "no_accounts" to "No accounts yet", "no_holdings" to "No holdings yet", "spent_30" to "Spent · 30d",
         "statement_unlock" to "Statement unlock", "password" to "Password",
         "none_found" to "No protected statements found", "done" to "Done", "set" to "Set",
-        "checking" to "Checking your email…"
+        "checking" to "Checking your email…",
+        "insights" to "Insights", "daily_avg" to "Daily average", "biggest" to "Biggest",
+        "transactions" to "Transactions", "where_goes" to "Where it goes · 30d",
+        "budgets" to "Budgets", "set_budgets" to "Set budgets", "overall" to "Overall",
+        "period" to "Period", "weekly" to "Weekly", "monthly" to "Monthly",
+        "left" to "left", "over" to "over by", "no_budgets" to "No budgets set"
     )
     private val id = mapOf(
         "overview" to "Ringkasan", "accounts" to "Rekening", "activity" to "Aktivitas",
@@ -31,7 +36,12 @@ object Strings {
         "no_accounts" to "Belum ada rekening", "no_holdings" to "Belum ada investasi", "spent_30" to "Pengeluaran · 30h",
         "statement_unlock" to "Buka kunci rekening koran", "password" to "Kata sandi",
         "none_found" to "Tidak ada rekening koran terkunci", "done" to "Selesai", "set" to "Simpan",
-        "checking" to "Memeriksa email…"
+        "checking" to "Memeriksa email…",
+        "insights" to "Wawasan", "daily_avg" to "Rata-rata harian", "biggest" to "Terbesar",
+        "transactions" to "Transaksi", "where_goes" to "Ke mana perginya · 30h",
+        "budgets" to "Anggaran", "set_budgets" to "Atur anggaran", "overall" to "Total",
+        "period" to "Periode", "weekly" to "Mingguan", "monthly" to "Bulanan",
+        "left" to "tersisa", "over" to "lebih", "no_budgets" to "Belum ada anggaran"
     )
     fun t(key: String, lang: String): String =
         (if (lang == "id") id else en)[key] ?: en[key] ?: key

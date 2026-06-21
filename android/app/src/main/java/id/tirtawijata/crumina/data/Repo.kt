@@ -35,6 +35,7 @@ object Repo {
     // statement unlock
     var discoveredBanks by mutableStateOf<List<BankSlot>>(emptyList())
     var statementPasswords by mutableStateOf<Map<String, String>>(emptyMap())
+    var budget by mutableStateOf(Budget())
 
     var loading by mutableStateOf(false)
     var error by mutableStateOf<String?>(null)
@@ -49,6 +50,7 @@ object Repo {
         statementPasswords = secure.statementPw?.let {
             runCatching { Gson().fromJson<Map<String, String>>(it, mapType) }.getOrNull()
         } ?: emptyMap()
+        budget = store.budget
         ready = true
     }
 
@@ -148,6 +150,32 @@ object Repo {
             return (transactions + stmtTx).sortedByDescending { it.date ?: "" }
         }
 
+    // ---- insights / budgets ----
+    val budgetCategories = listOf("Food & Dining", "Groceries", "Transport", "Shopping", "Travel", "Bills & Subs")
+
+    private fun daysAgo(date: String?): Long {
+        val d = date?.take(10) ?: return Long.MAX_VALUE
+        return try {
+            java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.parse(d), java.time.LocalDate.now())
+        } catch (e: Exception) { Long.MAX_VALUE }
+    }
+
+    private fun spendTxWithin(days: Long): List<Txn> =
+        transactions.filter { (it.cls == "spend" || it.cls == "fee") && daysAgo(it.date) in 0..days }
+
+    private fun spendWithin(days: Long): List<Pair<String, Double>> =
+        spendTxWithin(days).map { Categorize.category(it.merchant) to conv(abs(it.amount), "IDR") }
+
+    fun spentWindow(days: Long): Double = spendWithin(days).sumOf { it.second }
+    fun spentInCategory(cat: String, days: Long): Double = spendWithin(days).filter { it.first == cat }.sumOf { it.second }
+    fun categoryTotals(days: Long): List<Pair<String, Double>> =
+        spendWithin(days).groupBy({ it.first }, { it.second }).map { it.key to it.value.sum() }.sortedByDescending { it.second }
+
+    val spent30: Double get() = spentWindow(30)
+    val daily30: Double get() = spent30 / 30.0
+    val biggest30: Double get() = spendTxWithin(30).maxOfOrNull { conv(abs(it.amount), "IDR") } ?: 0.0
+    val count30: Int get() = spendTxWithin(30).size
+
     // ---- mutations ----
     fun addAccount(a: Account) { accounts = accounts + a; store.accounts = accounts }
     fun removeAccount(index: Int) { accounts = accounts.filterIndexed { i, _ -> i != index }; store.accounts = accounts }
@@ -157,6 +185,7 @@ object Repo {
     fun setCcy(c: String) { mainCcy = c; store.mainCcy = c }
     fun changeLang(l: String) { lang = l; store.lang = l }
     fun toggleHide() { hideAmounts = !hideAmounts; store.hideAmounts = hideAmounts }
+    fun setBudget(b: Budget) { budget = b; store.budget = b }
 
     fun t(key: String) = Strings.t(key, lang)
 
@@ -165,6 +194,7 @@ object Repo {
         accounts = emptyList(); holdings = emptyList(); transactions = emptyList()
         stmtAccounts = emptyList(); profile = null
         discoveredBanks = emptyList(); statementPasswords = emptyMap()
+        budget = Budget()
         mainCcy = "IDR"; lang = "en"; hideAmounts = false
     }
 }
