@@ -1,12 +1,13 @@
 package id.tirtawijata.crumina.data
 
 import retrofit2.http.GET
-
-data class Profile(val email: String? = null, val name: String? = null, val picture: String? = null)
-data class DataResponse(val profile: Profile? = null)
-data class FxResponse(val base: String? = null, val rates: Map<String, Double>? = null)
+import retrofit2.http.Query
 
 interface Api {
     @GET("api/data") suspend fun data(): DataResponse
-    @GET("api/fx") suspend fun fx(): FxResponse
+    @GET("api/fx") suspend fun fx(@Query("base") base: String): FxResponse
+    @GET("api/sync") suspend fun sync(): SyncResponse
+    @GET("api/statements") suspend fun statements(): StatementsResponse
+    @GET("api/yf") suspend fun search(@Query("q") q: String): SearchResponse
+    @GET("api/yf") suspend fun quote(@Query("symbol") symbol: String): QuoteResponse
 }

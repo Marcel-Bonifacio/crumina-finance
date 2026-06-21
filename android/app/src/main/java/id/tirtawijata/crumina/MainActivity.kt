@@ -2,6 +2,7 @@ package id.tirtawijata.crumina
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Base64
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,32 +22,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import id.tirtawijata.crumina.auth.AuthManager
-import id.tirtawijata.crumina.data.SecureStore
+import id.tirtawijata.crumina.data.Repo
+import id.tirtawijata.crumina.ui.AppScaffold
 import id.tirtawijata.crumina.ui.CruminaTheme
-import id.tirtawijata.crumina.ui.OverviewScreen
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var store: SecureStore
     private val loggedIn = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Finance app: keep balances out of screenshots and the recents preview.
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
-
-        store = SecureStore(this)
-        loggedIn.value = store.isLoggedIn
+        Repo.init(this)
+        loggedIn.value = Repo.isLoggedIn
         handleIntent(intent)
-
         setContent {
             CruminaTheme {
                 Surface(Modifier.fillMaxSize()) {
                     if (loggedIn.value) {
-                        OverviewScreen(store, onLogout = {
-                            store.clear()
-                            loggedIn.value = false
-                        })
+                        AppScaffold(onLogout = { Repo.logout(); loggedIn.value = false })
                     } else {
                         LoginScreen { AuthManager.login(this) }
                     }
@@ -61,11 +55,14 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    // The verified App Link lands here; pull the session out of the URL fragment.
     private fun handleIntent(intent: Intent?) {
         val tokens = AuthManager.handleCallback(intent?.data) ?: return
-        store.session = tokens.session
-        tokens.refreshToken?.let { store.refreshToken = it }
+        Repo.setSession(tokens.session, tokens.refreshToken)
+        tokens.profile?.let { p ->
+            runCatching {
+                String(Base64.decode(p, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP))
+            }.getOrNull()?.let { Repo.saveProfile(it) }
+        }
         loggedIn.value = true
     }
 }
