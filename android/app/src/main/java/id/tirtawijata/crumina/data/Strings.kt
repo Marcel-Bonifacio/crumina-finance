@@ -29,7 +29,7 @@ object Strings {
         "target" to "Target", "saved" to "Saved", "no_goals" to "No goals yet", "reached" to "Reached",
         "add_expense" to "Add expense", "amount" to "Amount", "merchant" to "Merchant",
         "category" to "Category", "date" to "Date", "upload_statement" to "Upload statement (PDF)",
-        "uploading" to "Uploading\u2026", "scan_receipt" to "Scan receipt", "trend" to "Spending trend \u00b7 6mo"
+        "uploading" to "Uploading\u2026", "scan_receipt" to "Scan receipt", "scanning" to "Scanning\u2026", "trend" to "Spending trend \u00b7 6mo"
     )
     private val id = mapOf(
         "overview" to "Ringkasan", "accounts" to "Rekening", "activity" to "Aktivitas",
@@ -59,7 +59,7 @@ object Strings {
         "target" to "Target", "saved" to "Terkumpul", "no_goals" to "Belum ada target", "reached" to "Tercapai",
         "add_expense" to "Tambah pengeluaran", "amount" to "Jumlah", "merchant" to "Merchant",
         "category" to "Kategori", "date" to "Tanggal", "upload_statement" to "Unggah rekening koran (PDF)",
-        "uploading" to "Mengunggah\u2026", "scan_receipt" to "Pindai struk", "trend" to "Tren pengeluaran \u00b7 6bln"
+        "uploading" to "Mengunggah\u2026", "scan_receipt" to "Pindai struk", "scanning" to "Memindai\u2026", "trend" to "Tren pengeluaran \u00b7 6bln"
     )
     fun t(key: String, lang: String): String =
         (if (lang == "id") id else en)[key] ?: en[key] ?: key
