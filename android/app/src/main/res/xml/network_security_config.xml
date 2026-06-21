@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- No plaintext anywhere. -->
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">crumina.tirtawijata.com</domain>
+        <!-- Optional certificate pinning. Off by default so a cert rotation can't brick
+             installs; enable once you control the rotation cadence.
+        <pin-set>
+            <pin digest="SHA-256">BASE64_SPKI_PIN_PRIMARY</pin>
+            <pin digest="SHA-256">BASE64_SPKI_PIN_BACKUP</pin>
+        </pin-set>
+        -->
+    </domain-config>
+</network-security-config>

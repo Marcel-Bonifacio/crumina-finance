@@ -60,7 +60,7 @@ http.createServer(async function (req, res) {
     // Static public assets
     if (pathname !== '/' && isPublic(pathname)) {
       const f = path.join(APP, pathname);
-      if (f.startsWith(APP) && fs.existsSync(f) && fs.statSync(f).isFile()) return serveFile(res, f, pathname === '/app.js');
+      if ((f === APP || f.startsWith(APP + path.sep)) && fs.existsSync(f) && fs.statSync(f).isFile()) return serveFile(res, f, pathname === '/app.js');
       res.statusCode = 404; sec(res); return res.end('Not found');
     }
     // Gated app shell (everything else, incl. "/")

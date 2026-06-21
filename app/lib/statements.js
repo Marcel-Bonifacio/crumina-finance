@@ -21,7 +21,7 @@ async function readStatements(mbox, pwMap){
       const an=text.match(/(?:Account No\.?|No\.?\s*Rekening|Card No\.?|No\.?\s*Kartu)\s*[:\-]?\s*([\dXx*]{6,})/i);
       const pd=text.match(/(\d{1,2}\s+\w{3,}\s+\d{4})\s*[-\u2013]\s*(\d{1,2}\s+\w{3,}\s+\d{4})/);
       for(const def of (ad.accounts||[])){ const m=text.match(def.re); if(!m) continue; const a={institution:ad.institution,name:def.name,type:def.type,balance:(def.sign||1)*parseAmt(m[1]),source:'statement',bank:ad.id,uid:'s_'+ad.id}; if(txns.length) a.txns=txns; if(an) a.acctNo=an[1]; if(pd) a.period=pd[1]+' - '+pd[2]; accounts.push(a); break; }
-    }catch(e){ console.error('stmt '+ad.id, (e&&e.stack)||e); accounts.push({bank:ad.id,error:String((e&&e.message)||e).slice(0,120)}); }
+    }catch(e){ console.error('stmt '+ad.id, (e&&e.stack)||e); accounts.push({bank:ad.id,error:'parse_failed'}); }
   }
   return accounts;
 }

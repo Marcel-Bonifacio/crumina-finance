@@ -7,7 +7,7 @@ node_modules/
 !.env.example
 
 # real user data (never commit)
-data/
+/data/
 *.local.json
 finance-data.json
 

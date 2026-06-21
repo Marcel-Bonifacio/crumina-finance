@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "id.tirtawijata.crumina",
+      "sha256_cert_fingerprints": [
+        "F5:97:60:69:FE:15:5B:45:65:35:BE:C6:D1:88:88:BC:C6:28:53:36:F9:B1:8C:71:CC:0F:8C:D0:D0:B3:0A:88"
+      ]
+    }
+  }
+]
