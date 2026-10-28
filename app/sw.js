@@ -1,4 +1,4 @@
-const C='crumina-v7';
+const C='crumina-v8';
 self.addEventListener('install',function(e){self.skipWaiting();e.waitUntil(caches.open(C).then(function(c){return c.addAll(['/','/app.js','/login','/manifest.webmanifest','/icon-192.png','/icon-32.png','/brand/crumina-icon.svg']).catch(function(){});}));});
 self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k!==C;}).map(function(k){return caches.delete(k);}));}).then(function(){return self.clients.claim();}));});
 self.addEventListener('fetch',function(e){
