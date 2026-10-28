@@ -1,6 +1,6 @@
 (function(){
   function $(id){ return document.getElementById(id); }
-  var HEAD={outlook:'Outlook / Office 365 · use an app password',icloud:'Apple iCloud Mail · use an app-specific password',custom:'Any IMAP server · enter host, port + app password',gmail:'Gmail · use an app password'};
+  var HEAD={outlook:'Outlook.com (IMAP) · use an app password',icloud:'iCloud Mail (IMAP) · use an app-specific password',custom:'Any IMAP server · enter host, port + app password',gmail:'Gmail · use an app password'};
   fetch('/api/guest?config=1',{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(c){
     if(c&&c.imap){ var w=$('imapWrap'); if(w) w.style.display='block'; }
     if(c&&c.google===false){ var g=$('gBtn'); if(g) g.style.display='none'; var od=$('orDiv'); if(od) od.style.display='none'; }
@@ -18,5 +18,5 @@
   });
   var ec=new URLSearchParams(location.search).get('imap');
   if(ec){ var w=$('imapWrap'); if(w) w.style.display='block'; var f=$('imapForm'); if(f) f.style.display='block';
-    var er=$('imapErr'); if(er){ er.textContent = ec==='missing'?'Please fill in all fields.' : ec==='auth'?"Couldn't sign in. Check the email, app password, and server.":'Connection error. Please try again.'; er.style.display='block'; } }
+    var er=$('imapErr'); if(er){ er.textContent = ec==='missing'?'Please fill in all fields.' : ec==='auth'?"Couldn't sign in. Check the email, app password, and server.":ec==='host'?"This mail server isn't allowed here. Use the provider's IMAP host on port 993.":'Connection error. Please try again.'; er.style.display='block'; } }
 })();

@@ -14,7 +14,7 @@ function eq(label, got, want) {
 
 // --- Running-balance parser ---------------------------------------------------
 
-// Year-less dd/mm dates are now extracted, and the amount/sign come from the
+// Year-less dd/mm dates are extracted, and the amount/sign come from the
 // balance delta (50,000 out, then 5,000,000 in).
 let r = parseStatementTxns(F.rbYearless);
 eq('RB year-less: row count', r.length, 2);

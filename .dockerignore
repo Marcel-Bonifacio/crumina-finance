@@ -1,0 +1,13 @@
+# Build context is the repo root (selfhost/docker-compose.yml: context: ..).
+# Docker ignores .gitignore, so secrets and local data must be excluded here too.
+**/.env
+**/.env.*
+**/.vercel
+**/node_modules
+**/*.local.json
+**/finance-data.json
+data
+.git
+.github
+android
+docs

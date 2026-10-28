@@ -1,9 +1,9 @@
 // Institution adapters.
 //
-// This is the only file that knows about specific banks. The parsing engine in
-// statements.js and parse.js stays generic and reads everything bank-specific
-// from the three tables below, so supporting a new institution (or dropping one)
-// is an edit here and nowhere else.
+// Most bank-specific data lives here: statement senders, password slots,
+// balance patterns and alert domains. A few exceptions remain outside this file:
+// the Gmail alert query in api/sync.js and some layout handling in parse.js and
+// statements.js. A new institution usually starts with an entry here.
 //
 // Account names are deliberately generic ("Savings account", "Credit card").
 // The engine fills in the real balances, account numbers and periods from the

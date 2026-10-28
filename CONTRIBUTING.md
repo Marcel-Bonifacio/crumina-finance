@@ -1,8 +1,8 @@
 # Contributing
 
-Thanks for considering a contribution. Crumina is a small, dependency-light project,
-and the goal is to keep it that way, easy to read, easy to audit, and runnable
-without a toolchain.
+Thanks for considering a contribution. Crumina is a small project with few
+dependencies, and it should stay that way: easy to read, easy to audit, and
+runnable without a toolchain.
 
 ## Before you start
 
@@ -21,7 +21,8 @@ without a toolchain.
   inline event handlers, and keep DOM output escaped. Do not log secrets or personal
   data.
 - **Banks belong in the registry.** Add or change institutions in `app/lib/banks.js`,
-  not in the parsing engines. See [docs/BANK-PARSERS.md](docs/BANK-PARSERS.md).
+  not in the parsing engines (alert sender domains also go in `app/api/sync.js`). See
+  [docs/BANK-PARSERS.md](docs/BANK-PARSERS.md).
 - **No personal data in the repo.** Never commit real statements, account numbers,
   tokens, or a populated `.env`. Use redacted fixtures.
 - **Localise strings.** Add English and Bahasa Indonesia entries together.
