@@ -1,11 +1,15 @@
 # Bank parsers
 
 Crumina understands two kinds of bank mail: monthly statement PDFs and real-time
-transaction alerts. Everything specific to an institution, which emails to look for,
-how to read a balance, how to label an alert, lives in one registry,
-[`app/lib/banks.js`](../app/lib/banks.js). The parsing engines in `statements.js` and
-`parse.js` are generic and read from that registry, so adding or removing a bank is an
-edit to one file.
+transaction alerts. Most institution-specific settings (statement senders, password
+slots, balance patterns, alert labels) live in one registry,
+[`app/lib/banks.js`](../app/lib/banks.js). A few other places also know about specific
+banks:
+
+- the alert sender list, `BANK_SPEC.fromDomains` in `app/api/sync.js`;
+- the CIMB and Permata alert parsers in `app/lib/parse.js`;
+- a few layout markers (`PermataBank.com`, `OctoMobile`) in the row parser in
+  `app/lib/statements.js`.
 
 Account names in the registry are deliberately generic ("Savings account",
 "Credit card"). The engine fills in the real balance, account number and statement
@@ -18,7 +22,7 @@ period from the document; it does not need a personal nickname.
 ### `DOMAIN_NAMES`
 
 Maps a sender-domain fragment to a display name. It labels real-time alerts when no
-dedicated alert adapter matches. Order matters, put the more specific fragment first.
+dedicated alert adapter matches. Order matters: put the more specific fragment first.
 
 ```js
 ['cimbniaga', 'CIMB Niaga'], ['cimb', 'CIMB'], ['klikbca', 'BCA'], ['bca', 'BCA']
@@ -85,12 +89,15 @@ To support a new institution's e-statement:
 2. Add an entry to `STATEMENT_ADAPTERS` with the sender address, the password slot (or
    `null`), a `guard` that appears in the statement text, and one or more balance
    patterns. Use a capture group around the number.
-3. If the bank also sends real-time alerts in a custom format, add its domain to
-   `DOMAIN_NAMES` (for the label) and, if you want precise field extraction, an
-   `ALERT_ADAPTERS` entry plus a parser function in `parse.js`. Otherwise the heuristic
-   parser will handle the alerts.
+3. If the bank also sends real-time alerts, add its sender domain to
+   `BANK_SPEC.fromDomains` in `app/api/sync.js` (otherwise `/api/sync` never fetches
+   those emails), and add a fragment to `DOMAIN_NAMES` for the label. For precise field
+   extraction, also add an `ALERT_ADAPTERS` entry, a parser function in `parse.js`, and
+   a branch for its `parser` name in `parseAlert`. Otherwise the heuristic parser
+   handles the alerts.
 
-That is the whole change, the engines pick it up with no further edits.
+A bank that only sends statements needs only the `banks.js` edit. Alerts also need
+the `sync.js` edit.
 
 ## Testing a pattern
 
@@ -115,4 +122,6 @@ cases are handled:
 
 - A row that prints its own full date (`dd/mm/yyyy`) keeps that year.
 - A statement from a previous year is dated by its period, not by today's date, so
-  last year's stateme
+  last year's statement keeps last year's dates.
+- A statement whose period runs from December into January puts December rows in the
+  start year and every other row in the end year.

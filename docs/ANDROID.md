@@ -1,18 +1,16 @@
 # Crumina on Android
 
 This document covers how Crumina ships as a native Android app: the architecture, the
-authentication redesign, the Google security controls, the backend changes it needs, and
-how the signed APK is built in CI.
+sign-in flow, the security controls, the server-side support for the app, and how the
+signed APK is built in CI.
 
-## Decision and trade-off
+## Why native
 
-The Android client is a **native Kotlin / Jetpack Compose app**, not a Trusted Web
-Activity or a WebView wrapper. A native app gives platform-native UX, biometric app
-lock, Play Integrity attestation and Keystore-backed credential storage. The cost is
-real: the UI that the PWA already implements is re-written natively, so the two clients
-no longer share one codebase. The **server is unchanged in shape**: the app is a new
-client of the same JSON API, so all parsing, sync, FX and quote logic stays on the
-server and is reused as-is.
+The Android client is a native Kotlin / Jetpack Compose app, not a Trusted Web
+Activity or a WebView wrapper. A native app gives platform-native UX and
+Keystore-backed credential storage. The trade-off is that the PWA's UI is written a
+second time in Compose, so the two clients share no UI code. The app uses the same
+JSON API as the web client, so parsing, sync, FX and quote logic stay on the server.
 
 The app talks to one origin only, `https://crumina.tirtawijata.com`, over TLS. The only
 third party it touches is Google sign-in, and that happens in an external browser tab,
@@ -28,7 +26,7 @@ flowchart LR
         NET[OkHttp / Retrofit]
         AUTH[Custom Tab]
     end
-    subgraph Server["crumina.tirtawijata.com (unchanged shape)"]
+    subgraph Server["crumina.tirtawijata.com"]
         API[API handlers]
         MBOX[Mailbox adapter]
         PARSE[Statement and alert parsers]
@@ -47,28 +45,34 @@ The phone holds the UI, app state and the user's session token. The server still
 the privileged work (reads the mailbox, decrypts statements, signs the user in) and
 keeps no copy of the user's finances.
 
-## Authentication (the real re-architecture)
+## Authentication
 
 The web app signs in with Google OAuth and the server sets `HttpOnly` cookies. A native
-app cannot use those cookies, and **Google's policy forbids running OAuth inside an
-embedded WebView**. So native auth is redesigned around three pieces: an external
-user-agent, a verified App Link, and a server that hands the app a bearer token.
+app cannot use those cookies, and Google's policy forbids running OAuth inside an
+embedded WebView. So the app signs in with three pieces: an external user-agent, a
+verified App Link, and a server that hands the app a bearer token.
 
 ### Flow
 
 1. The app opens a **Chrome Custom Tab** to `GET /api/auth/start?client=android`.
    (Custom Tabs are the Google-sanctioned external user-agent; they share the system
    browser's session and are not controllable by the app.)
-2. The server runs the existing Google OAuth exchange, gets the user's profile and an
-   encrypted refresh token, exactly as it does for web.
+2. The server runs the same Google OAuth exchange as for the web client. It gets the
+   user's profile and, when Google returns one, a refresh token, which it encrypts.
 3. Instead of setting cookies, the server returns a **302 to a verified App Link**:
    `https://crumina.tirtawijata.com/auth/android#t=<session>&p=<profile>&rt=<enc_refresh>`
-   The payload rides in the URL **fragment** (after `#`), which browsers never send to a
-   server and never log.
-4. Android opens the **app directly** because the app declares an intent filter for that
-   HTTPS path and the path is **verified by Digital Asset Links** (the same
-   `assetlinks.json` mechanism as a TWA, keyed to the app's signing certificate). No
-   browser, no other app, can intercept the redirect.
+   The payload rides in the URL fragment (after `#`), which the browser does not send
+   to any server. The tokens are still in that URL, though, so whatever ends up
+   handling it receives them. If the browser shows the fallback page, its script
+   (`app/auth/android.js`) strips the fragment from the address bar and history entry.
+4. Android opens the app directly because the app declares an intent filter for that
+   HTTPS path and the path is verified by Digital Asset Links (`assetlinks.json`, keyed
+   to the app's signing certificate). This only holds while
+   `/.well-known/assetlinks.json` is publicly reachable and lists the certificate the
+   installed APK is signed with, so the redirect is not hijack-proof. If verification fails, Android 12 and later open the
+   link in the browser instead, which shows `app/auth/android.html`. Older versions can
+   show a chooser, and another app that declares the same URL could then receive the
+   fragment.
 5. The app reads the fragment, stores the session in **EncryptedSharedPreferences**, and
    from then on sends `Authorization: Bearer <session>` on every API call.
 
@@ -80,7 +84,7 @@ sequenceDiagram
     participant G as Google
     App->>Tab: open /api/auth/start?client=android
     Tab->>API: start
-    API->>G: OAuth (PKCE)
+    API->>G: OAuth auth code flow (client secret, no PKCE)
     G-->>API: code
     API->>API: exchange, encrypt refresh token
     API-->>Tab: 302 App Link  /auth/android#t=...&rt=...
@@ -92,79 +96,66 @@ sequenceDiagram
 
 ### Where the Gmail refresh token lives
 
-The server is stateless (no database), so it cannot park the Gmail refresh token
-server-side keyed to a session. Two options:
+The server has no database, so it cannot keep the Gmail refresh token keyed to a
+session. The app stores the *encrypted* refresh token (Keystore-backed at rest) and
+sends it on sync in an `X-Cr-Rt` header. The server decrypts it with `TOKEN_ENC_KEY`
+and uses it the same way as the `tally_rt` cookie. The token is never stored in
+plaintext or logged. If the deployment gains a KV store, refresh tokens could move
+server-side so the app holds only the session bearer.
 
-- **Default (no new infrastructure).** The app holds the *encrypted* refresh token
-  (Keystore-backed at rest) and returns it on sync via an `X-Cr-Rt` header; the server
-  decrypts it with `TOKEN_ENC_KEY` and uses it just like the cookie value today. The
-  token is never in plaintext at rest or in logs.
-- **Recommended before a public release.** Add a KV store (already on the deployment
-  roadmap) so refresh tokens stay server-side keyed to the session; the app then only
-  ever holds the opaque session bearer. Prefer this once a KV is available.
+Statement passwords sit in the same encrypted store on the phone. The app sends them
+to `/api/statements` in an `X-Cr-Pw` header (base64-encoded JSON over TLS); the server
+uses them for that request and does not keep them.
 
-Guest/local mode and IMAP sign-in map onto the same model: the app calls `/api/guest`
-for a local session, and IMAP credentials use the existing encrypted path.
+The Android app supports Google sign-in only. Local mode and IMAP sign-in are
+available in the web client only.
 
-## Google security controls the app enforces
+## Security controls
 
 | Area | Control |
 |---|---|
 | OAuth | External user-agent (Chrome Custom Tabs), never an embedded WebView, as required by Google's secure-browser policy |
-| Redirect integrity | App Links verified by Digital Asset Links (`assetlinks.json`); the redirect cannot be hijacked by another app |
-| Token storage | AndroidX Security `EncryptedSharedPreferences` with a master key in the Android Keystore (StrongBox when present); no tokens in plaintext, logs or cloud backups |
-| Backups | `android:allowBackup="false"` and `dataExtractionRules` exclude the credential store |
-| Screen privacy | `FLAG_SECURE` on screens that show balances, blocking screenshots and the recents thumbnail |
-| Transport | `network_security_config.xml`: `cleartextTrafficPermitted="false"`, scoped to `crumina.tirtawijata.com`; optional certificate pinning (documented, off by default so a cert rotation can't brick installs) |
-| Permissions | `INTERNET` only; `CAMERA` only if on-device receipt OCR is ported, and then runtime-requested |
-| Release hardening | R8 minify + resource shrink; Logcat stripped of any PII/token output in release builds |
-| App signing | Play App Signing (Google holds the app signing key; you hold only the upload key) |
-| Attestation | Play Integrity API to confirm a genuine app/device before privileged calls |
-| Dependencies | Pinned versions, maintained libraries only (AndroidX Browser/Custom Tabs, AndroidX Security, Retrofit/OkHttp) |
+| Redirect integrity | App Link with `android:autoVerify="true"`, verified against `/.well-known/assetlinks.json`. Only as strong as that verification (see step 4 of the flow) |
+| Token storage | AndroidX Security `EncryptedSharedPreferences` with an AES256_GCM `MasterKey` in the Android Keystore. StrongBox is not requested |
+| Backups | `android:allowBackup="false"`, `android:fullBackupContent="false"`, and `dataExtractionRules` that exclude both encrypted stores from cloud backup and device transfer |
+| Screen privacy | `FLAG_SECURE` on the whole window (set in `MainActivity`), blocking screenshots and the recents thumbnail |
+| Transport | `network_security_config.xml`: `cleartextTrafficPermitted="false"`. A certificate pin-set is included but commented out, so a certificate rotation cannot lock out installed apps |
+| Permissions | `INTERNET` only. Receipt OCR runs ML Kit on an image picked through the system picker, so the app needs no `CAMERA` permission |
+| Release hardening | R8 minify and resource shrinking (`isMinifyEnabled`, `isShrinkResources`). The app source makes no `android.util.Log` calls |
+| App signing | Self-managed release key. CI signs the APK with the keystore held in repository secrets (see [Build and signing](#build-and-signing-github-actions)), so anyone who can read those secrets can sign an update |
+| Dependencies | Pinned versions (AndroidX Browser, AndroidX Security, Retrofit/OkHttp, ML Kit text recognition) |
 
-## Backend changes this depends on
+Not implemented: PKCE on the Google OAuth request (the server is a confidential
+client and authenticates with the client secret), Play Integrity attestation, a
+biometric app lock, a StrongBox-backed master key, certificate pinning, and Play App
+Signing (the app is distributed through GitHub Releases, not Google Play).
 
-All changes fold into **existing** handlers so the deployment stays under the Vercel
-Hobby 12-function limit. No new `api/*.js` files.
+## Server support for the native client
 
-- **Done (`app/lib/session.js`).** `fromReq` now also reads `Authorization: Bearer`
-  (additive; the web cookie path is unchanged). This is what lets the app authenticate
-  every API call.
-- **To apply (`app/lib/mailbox.js`, `getMailbox`).** Read the encrypted refresh token
-  from an `x-cr-rt` header as a fallback to the `tally_rt` cookie:
+All of this lives in existing handlers, so the deployment stays under the 12-function
+limit of the Vercel Hobby plan.
 
-  ```js
-  var rt = getCookie(req,'tally_rt') || (req.headers && req.headers['x-cr-rt']);
-  ```
-
-- **To apply (`app/api/auth/start.js`).** Accept `?client=android` and carry it inside
-  the OAuth `state` so the callback knows the caller is the app.
-- **To apply (`app/api/auth/callback.js`).** When the state marks an android client,
-  302 to the App Link with the session/profile/encrypted-refresh in the fragment instead
-  of setting cookies:
-
-  ```js
-  if (isAndroid) {
-    const frag = 't='+encodeURIComponent(sign(email))
-               + '&p='+encodeURIComponent(prof)
-               + '&rt='+encodeURIComponent(encrypt(refresh_token));
-    res.writeHead(302, { Location: 'https://crumina.tirtawijata.com/auth/android#'+frag });
-    return res.end();
-  }
-  ```
-
-- **To host:** `/.well-known/assetlinks.json` on `crumina.tirtawijata.com`, containing
-  the app's package name and the **release signing SHA-256**. This verifies both the App
-  Link redirect and (if later wrapped) any TWA. Example:
-
-  ```json
-  [{
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": { "namespace": "android_app",
-      "package_name": "id.tirtawijata.crumina",
-      "sha256_cert_fingerprints": ["<RELEASE_SHA256>"] }
-  }]
-  ```
+- `app/lib/session.js`: `fromReq` reads the `tally_session` cookie or, if there is
+  none, an `Authorization: Bearer` header, so the app authenticates with the same
+  signed session as the web client.
+- `app/lib/mailbox.js` (`getMailbox`): reads the encrypted refresh token from the
+  `tally_rt` cookie, or from the `X-Cr-Rt` header when there is no cookie.
+- `app/api/statements.js`: reads statement passwords from the `tally_pw` cookie, or
+  from the `X-Cr-Pw` header when the cookie holds none.
+- `app/api/auth/start.js`: `?client=android` appends `.android` to the OAuth `state`.
+  The `oauth_state` nonce cookie still provides CSRF protection.
+- `app/api/auth/callback.js`: when the state ends in `.android`, the handler clears
+  `oauth_state`, sets no session cookies, and redirects (302) to `APP_LINK`
+  (`https://crumina.tirtawijata.com/auth/android`) with `t`, `p` and, when Google
+  returned a refresh token, `rt` in the fragment.
+- `app/.well-known/assetlinks.json`: served at `/.well-known/assetlinks.json` with the
+  package name and the release signing SHA-256 (see
+  [Deploying](#deploying-cruminatirtawijatacom) below).
+- `app/auth/android.html` and `app/auth/android.js`: the page the browser shows if the
+  App Link does not open the app, and the script that strips the fragment.
+- `app/middleware.js` (Vercel) and `isPublic` in `selfhost/server.js` (self-host): make
+  `/.well-known/assetlinks.json` and `/auth/android` public, so Android can fetch the
+  Asset Links file without a session and the fallback page loads.
 
 ## Project structure
 
@@ -173,28 +164,62 @@ android/
   settings.gradle.kts
   build.gradle.kts                  root build config + plugin versions
   gradle.properties
-  gradle/wrapper/                   pinned Gradle wrapper
+  gradle/wrapper/                   gradle-wrapper.properties (pins Gradle 8.7)
   app/
-    build.gradle.kts                deps, signing config (reads CI secrets/env)
+    build.gradle.kts                deps, API_BASE, signing config (reads CI env)
     proguard-rules.pro
-    src/main/AndroidManifest.xml    minimal perms, App Link intent filter
-    src/main/res/xml/network_security_config.xml
+    src/main/AndroidManifest.xml    INTERNET permission, App Link intent filter
+    src/main/res/xml/
+      network_security_config.xml   no cleartext; pin-set present but commented out
+      data_extraction_rules.xml     keeps the encrypted stores out of backups
     src/main/java/id/tirtawijata/crumina/
       CruminaApp.kt
-      MainActivity.kt
-      data/SecureStore.kt           EncryptedSharedPreferences (Keystore)
+      MainActivity.kt               FLAG_SECURE, sign-in screen, App Link handling
+      auth/AuthManager.kt           Custom Tab launch + App Link callback
       data/Api.kt                   Retrofit interface for crumina.tirtawijata.com
       data/Net.kt                   OkHttp with Bearer interceptor
-      auth/AuthManager.kt           Custom Tab launch + App Link callback
-      ui/OverviewScreen.kt          net worth / cash / investments
+      data/SecureStore.kt           encrypted store: session, refresh token, statement passwords
+      data/Store.kt                 encrypted local cache: accounts, holdings, settings
+      data/Repo.kt                  app state, sync and on-device persistence
+      data/Models.kt                API responses and local data classes
+      data/Categorize.kt            merchant to category rules, ported from the web app
+      data/Ocr.kt                   ML Kit receipt OCR
+      data/Strings.kt               English and Bahasa Indonesia strings
+      ui/AppScaffold.kt             bottom navigation for the five tabs
+      ui/OverviewScreen.kt          net worth, cash, investments
+      ui/Dashboard.kt               insights, trend, budgets, recurring, carbon, goals
+      ui/AccountsScreen.kt
+      ui/ActivityScreen.kt
+      ui/PortfolioScreen.kt
+      ui/SettingsScreen.kt
+      ui/Components.kt              shared composables
       ui/Theme.kt
 ```
 
+## Screens
+
+Five tabs:
+
+- Overview: net worth, cash and investments, insights, a 6-month spending trend,
+  budgets, recurring payments, a carbon estimate and savings goals.
+- Accounts: accounts from statements and manual entries, and PDF statement upload.
+- Activity: transactions, and manual expenses with on-device receipt OCR.
+- Portfolio: holdings with live quotes.
+- Settings: currency, language, hide amounts, statement unlock, sync and log out.
+
+App data is cached in `EncryptedSharedPreferences` (`data/Store.kt`), and the UI is in
+English and Bahasa Indonesia (`data/Strings.kt`).
+
 ## Build and signing (GitHub Actions)
 
-CI is the build path: the workflow sets up **JDK 17** and the **Android SDK**, runs
-`./gradlew assembleDebug` to validate that it compiles, then builds a **signed release
-APK** from secrets and uploads it as a run artifact.
+CI is the build path. The workflow (`.github/workflows/android.yml`) sets up JDK 17,
+the Android SDK and Gradle 8.7, runs `gradle assembleDebug` to check that the app
+compiles, then `gradle assembleRelease`. The release APK is signed when the keystore
+secrets are set (pull requests always get an unsigned build), and the APKs are
+uploaded as a run artifact. The workflow runs on pushes to the `android` branch, on
+pull requests into `android` or `main`, and on manual dispatch. Pushing a version tag
+(`vX.Y.Z`) also runs a separate release job that publishes the signed APK as a
+pre-release on GitHub Releases.
 
 Required repository secrets:
 
@@ -214,8 +239,7 @@ keytool -genkeypair -v -keystore crumina-release.jks \
 base64 -w0 crumina-release.jks   # paste into the ANDROID_KEYSTORE_BASE64 secret
 ```
 
-Get the SHA-256 fingerprint for `assetlinks.json` (or copy it from Play Console → App
-signing once the app is uploaded):
+Get the SHA-256 fingerprint for `assetlinks.json`:
 
 ```bash
 keytool -list -v -keystore crumina-release.jks -alias crumina | grep SHA256
@@ -226,14 +250,17 @@ it afterward; the keystore is never committed.
 
 ## Distribution
 
-- **Sideload APK.** Take the signed `app-release.apk` from the CI run and install it
-  (the device must allow installing from unknown sources). Good for personal use and
-  testing.
-- **Google Play.** Switch the release step to `bundleRelease` (an `.aab`), enable Play
-  App Signing, and upload to the Play Console. Add the Play Integrity API for device
-  attestation. Play requires a privacy policy (already at `/privacy`) and a data-safety
-  declaration: read-only mailbox access, finances stored on device/your server, no
-  third-party analytics.
+- **Sideload APK.** Download the signed APK from the
+  [Releases](https://github.com/Marcel-Bonifacio/crumina-finance/releases) page (or take
+  `app-release.apk` from a CI run) and install it. The device must allow installing
+  from unknown sources.
+- **Google Play.** Not set up. Publishing there would mean switching the release step
+  to `bundleRelease` (an `.aab`), enrolling in Play App Signing, adding Play's
+  app-signing SHA-256 to `assetlinks.json`, and uploading to the Play Console. Play
+  Integrity attestation only becomes an option for Play-installed builds. Play also
+  requires a privacy policy (already at `/privacy`) and a data-safety declaration:
+  read-only mailbox access, finances stored on device/your server, no third-party
+  analytics.
 
 ## Deploying crumina.tirtawijata.com
 
@@ -245,17 +272,23 @@ existing `app/` (same code as the web deploy) with these set:
 - **Google console:** add `https://crumina.tirtawijata.com/api/auth/callback` to the
   OAuth client's authorized redirect URIs.
 - **Asset Links:** `app/.well-known/assetlinks.json` is served at
-  `/.well-known/assetlinks.json`. Replace `REPLACE_WITH_RELEASE_SHA256` with your release
-  signing SHA-256 (`keytool -list -v -keystore crumina-release.jks -alias crumina | grep SHA256`,
-  or copy it from Play Console -> App signing). Until this matches, App Link verification
-  fails and sign-in falls back to the browser page at `app/auth/android.html`.
-- **Verify:** after deploy, `curl https://crumina.tirtawijata.com/.well-known/assetlinks.json`
-  should return the JSON, and Android verifies the link on install.
+  `/.well-known/assetlinks.json` and already holds the release signing SHA-256. If you
+  change the signing key, update it (`keytool -list -v -keystore crumina-release.jks
+  -alias crumina | grep SHA256`). If it does not match the installed APK's certificate,
+  App Link verification fails and sign-in falls back to the browser page at
+  `app/auth/android.html`.
+- **Verify:** both `/.well-known/assetlinks.json` and `/auth/android` are public on
+  Vercel and on self-host. After deploy, check the file without a session:
 
-## Scope: foundation vs. next
+  ```bash
+  curl -sI https://crumina.tirtawijata.com/.well-known/assetlinks.json
+  # expect HTTP 200 and content-type: application/json, not a 302 to /login
+  ```
 
-This draft delivers the **secure foundation**: the auth redesign, Keystore-backed token
-storage, the network layer, an Overview screen (net worth, cash, investments) reading
-`/api/data` and `/api/fx`, and the CI + signing pipeline. The remaining screens
-(Accounts, Activity, Insights, Budgets, Portfolio, Settings), plus on-device OCR, an
-offline cache, and full EN/ID parity, are incremental work on top of this skeleton.
+  Android verifies the link on install. To re-run verification on a device with the
+  app installed (Android 12 and later) and read the result:
+
+  ```bash
+  adb shell pm verify-app-links --re-verify id.tirtawijata.crumina
+  adb shell pm get-app-links id.tirtawijata.crumina   # crumina.tirtawijata.com: verified
+  ```

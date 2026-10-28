@@ -2,9 +2,11 @@
 
 Every endpoint is one file under `app/api/`, written as a Node `(req, res)` handler.
 Responses are JSON unless noted. Authentication is a signed session cookie
-(`tally_session`); handlers that need it return `401` when it is absent or invalid.
-Several endpoints are rate-limited per IP and return `429` with a `Retry-After`
-header when the limit is exceeded.
+(`tally_session`), or the same token as `Authorization: Bearer` from the Android app;
+handlers that need it return `401` when it is absent or invalid. Several endpoints are
+rate-limited, counted per endpoint and client IP, and return `429` with a
+`Retry-After` header when the limit is exceeded. Behind a proxy, the client IP comes
+from `X-Real-IP` (see `TRUST_PROXY` in [CONFIGURATION.md](CONFIGURATION.md)).
 
 ## Summary
 
@@ -59,9 +61,13 @@ IMAP sign-in. Returns `404` unless `IMAP_ENABLED` is set. Rejects cross-site req
 (checks `Sec-Fetch-Site` and `Origin`), is rate-limited, and caps the body at 4 KB.
 Form fields: `provider` (`gmail`, `outlook`, `icloud`, or empty for a custom server),
 `email`, `password` (an app-specific password), and for a custom server `host` and
-`port`. The credentials are tested with a real IMAP connection; on success they are
-stored AES-256-GCM encrypted in the `cr_imap` cookie and the user is redirected to
-`/`. On failure the login page is shown again with an error code.
+`port`. A custom server must use port 993 (TLS), and its host must not resolve to a
+private, loopback, link-local or reserved address unless `IMAP_ALLOW_PRIVATE` is set.
+The credentials are tested with a real IMAP connection; on success they are stored
+AES-256-GCM encrypted in the `cr_imap` cookie and the user is redirected to `/`. On
+failure the handler redirects to `/login?imap=<code>`, where the code is `missing`
+(a field is empty), `host` (wrong port or a disallowed host), `auth` (the IMAP login
+failed) or `error`.
 
 ### `GET /api/logout`
 
@@ -151,8 +157,15 @@ is password-protected or unreadable.
 
 ### `GET /api/fx`
 
-Returns exchange rates for a base currency (default `IDR`), cached for an hour. Public,
-because it exposes no user data.
+Returns exchange rates for a base currency (default `IDR`). No authentication, because
+it exposes no user data. Limited to 60 requests a minute per IP.
+
+The server fetches one USD rate table from `open.er-api.com`, caches it for up to an
+hour, and derives every other base from it, so requests for different bases do not
+reach the provider. If a refresh fails, the server keeps serving the last good table.
+Responses carry `Cache-Control: private, max-age=3600`, so only the browser caches
+them. If no table is available yet, or the base is unknown, the response is `200`
+with empty `rates` and `Cache-Control: no-store`.
 
 ```json
 { "base": "IDR", "rates": { "USD": 0.000061, "SGD": 0.000083 } }
