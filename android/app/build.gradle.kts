@@ -45,7 +45,23 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
+    packaging {
+        resources {
+            // Keep third-party licence and notice files in the APK instead of dropping them.
+            // AL2.0 and LGPL2.1 are identical texts shipped by several libraries, so one copy is kept.
+            // Other licence and notice files that share a path (AGP excludes these by default)
+            // are concatenated, so no library's notice is lost. Non-legal duplicates such as
+            // MANIFEST.MF, signature files and maven metadata stay excluded by AGP's defaults.
+            val notices = setOf(
+                "/META-INF/LICENSE", "/META-INF/LICENSE.txt", "/META-INF/LICENSE.md",
+                "/META-INF/NOTICE", "/META-INF/NOTICE.txt", "/META-INF/NOTICE.md",
+                "/LICENSE", "/LICENSE.txt", "/NOTICE", "/NOTICE.txt"
+            )
+            excludes -= notices
+            merges += notices
+            pickFirsts += setOf("/META-INF/AL2.0", "/META-INF/LGPL2.1")
+        }
+    }
 }
 
 dependencies {
