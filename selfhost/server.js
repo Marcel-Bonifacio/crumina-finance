@@ -24,7 +24,7 @@ const SEC = {
   'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
-  'Content-Security-Policy': "default-src 'self'; img-src 'self' data: https://*.googleusercontent.com https://t1.gstatic.com https://www.google.com; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:"
+  'Content-Security-Policy': "default-src 'self'; img-src 'self' data: https://*.googleusercontent.com https://t1.gstatic.com https://www.google.com; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:"
 };
 function sec(res) { Object.keys(SEC).forEach(function (k) { res.setHeader(k, SEC[k]); }); }
 function serveFile(res, file, noStore) {

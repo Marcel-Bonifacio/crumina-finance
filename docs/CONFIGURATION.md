@@ -39,7 +39,13 @@ Crumina without Google (local mode and, if enabled, IMAP still work).
 
 In Google Cloud, create an OAuth web client, add the redirect URI above (matching
 your domain), and request the `openid`, `email`, `profile` and
-`gmail.readonly` scopes. Until the app passes Google's verification you can add up
+`gmail.readonly` scopes. For the Google Identity Services popup on `/login`, also
+add your site (for example `https://crumina.example.com`) under **Authorized
+JavaScript origins**; without it the login page falls back to the redirect flow.
+For the Android app's in-app sign-in, create an **Android** OAuth client in the
+same project with package `id.tirtawijata.crumina` and your release signing
+key's SHA-1, and set `GOOGLE_WEB_CLIENT_ID` in `android/app/build.gradle.kts`
+to the web client's ID. Until the app passes Google's verification you can add up
 to 100 test users. Crumina only ever requests read-only Gmail access.
 
 ## IMAP sign-in (optional, self-host)

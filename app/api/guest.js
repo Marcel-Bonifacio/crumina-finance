@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
   // --- public config probe ---
   if (req.method === 'GET' && 'config' in q) {
     res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store');
-    return res.end(JSON.stringify({ imap: !!process.env.IMAP_ENABLED, google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_REDIRECT_URI) }));
+    return res.end(JSON.stringify({ imap: !!process.env.IMAP_ENABLED, google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_REDIRECT_URI), clientId: process.env.GOOGLE_CLIENT_ID || null }));
   }
 
   // --- IMAP sign-in (self-host only) ---

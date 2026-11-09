@@ -65,7 +65,7 @@ fun SettingsScreen(onLogout: () -> Unit, onSync: () -> Unit) {
         SettingRow(r.t("display_name"), r.displayName ?: r.firstName ?: r.t("display_name_sub"), onClick = { editName = true }) { Chevron() }
         if (r.localMode) {
             val activity = androidx.compose.ui.platform.LocalContext.current
-            SettingRow(r.t("connect_google"), r.t("connect_google_sub"), onClick = { id.tirtawijata.crumina.auth.AuthManager.login(activity) }) { Chevron() }
+            SettingRow(r.t("connect_google"), r.t("connect_google_sub"), onClick = { (activity as? id.tirtawijata.crumina.MainActivity)?.startGoogleSignIn() ?: id.tirtawijata.crumina.auth.AuthManager.login(activity) }) { Chevron() }
         }
     }
     Gap()

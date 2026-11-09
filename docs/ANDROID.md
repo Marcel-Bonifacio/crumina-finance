@@ -47,6 +47,27 @@ keeps no copy of the user's finances.
 
 ## Authentication
 
+### Google Identity Services (default)
+
+The app signs in without leaving it, using Google Identity Services:
+
+1. **Credential Manager** (`androidx.credentials` + `googleid`) shows Google's account picker
+   for the server's web client ID (`BuildConfig.GOOGLE_WEB_CLIENT_ID`).
+2. **AuthorizationClient** (`play-services-auth`) asks that account for `gmail.readonly` and a
+   one-time **server auth code** (`requestOfflineAccess`). The first time, Google shows a consent
+   screen (launched through `StartIntentSenderForResult`).
+3. The app posts the code to `POST /api/auth/callback` with `{client:"android", code}`. The server
+   exchanges it with `redirect_uri=""`, checks that Gmail access was granted, and returns
+   `{t, p, rt}`: the same session, profile and encrypted refresh token as the browser flow.
+
+Google matches the app to the **Android OAuth client** in Google Cloud by package name
+(`id.tirtawijata.crumina`) and signing-certificate SHA-1. A build signed with another key
+(debug builds, forks) gets a developer error from Google and falls back to the browser flow
+below. Phones without Google Play services or without a Google account also use the browser
+flow. Cancelling the picker or the consent screen does nothing.
+
+### Browser flow (fallback)
+
 The web app signs in with Google OAuth and the server sets `HttpOnly` cookies. A native
 app cannot use those cookies, and Google's policy forbids running OAuth inside an
 embedded WebView. So the app signs in with three pieces: an external user-agent, a
@@ -179,7 +200,8 @@ android/
     src/main/java/id/tirtawijata/crumina/
       CruminaApp.kt
       MainActivity.kt               FLAG_SECURE, sign-in screen, App Link handling
-      auth/AuthManager.kt           Custom Tab launch + App Link callback
+      auth/GoogleSignIn.kt          Google Identity Services: Credential Manager + AuthorizationClient
+      auth/AuthManager.kt           Custom Tab launch + App Link callback (fallback)
       data/Api.kt                   Retrofit interface for crumina.tirtawijata.com
       data/Net.kt                   OkHttp with Bearer interceptor
       data/SecureStore.kt           encrypted store: session, refresh token, statement passwords
