@@ -307,7 +307,8 @@ fun TxRow(t: Txn, first: Boolean) {
     val label = if (income) "Income" else if (spend) Categorize.category(t.merchant) else t.cls!!.replace('_', ' ').replaceFirstChar { it.uppercase() }
     val detail = listOfNotNull(t.account ?: "Card", fmtShortDate(t.date), label).joinToString(" · ")
     ListRow(first, { IconTile(name.take(1).uppercase(), txGrad(t.cls)) }, name, detail) {
-        val amt = Repo.inMain(kotlin.math.abs(t.amount), "IDR", signed = false)
+        // Without an IDR rate, show the original rupiah amount rather than a converted 0.
+        val amt = if (Repo.canConv("IDR")) Repo.inMain(kotlin.math.abs(t.amount), "IDR", signed = false) else Repo.money(kotlin.math.abs(t.amount), "IDR", false)
         Text(
             (if (t.amount > 0) "+" else "−") + amt,
             color = if (income) cr.green else if (spend) cr.red else cr.muted,

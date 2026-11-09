@@ -23,7 +23,9 @@ async function resolvePublic(host) {
   try {
     const a = net.isIP(host) ? [{ address: host }] : await require('dns').promises.lookup(host, { all: true, verbatim: true });
     if (!a.length || a.some(function (x) { return blocked(x.address); })) return null;
-    return a[0].address;
+    // Pinning one address loses happy-eyeballs: prefer IPv4, which every host can reach.
+    const v4 = a.find(function (x) { return net.isIPv4(String(x.address)); });
+    return (v4 || a[0]).address;
   } catch (e) { return null; }
 }
 

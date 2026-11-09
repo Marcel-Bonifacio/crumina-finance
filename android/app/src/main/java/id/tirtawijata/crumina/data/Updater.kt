@@ -65,11 +65,13 @@ object Updater {
         val now = System.currentTimeMillis()
         if (!force && now - prefs.getLong("last", 0L) < CHECK_EVERY_MS) return
         cleanup(context)
+        var answered = false
         val rel = withContext(Dispatchers.IO) {
             runCatching {
                 val req = Request.Builder().url(LATEST).header("Accept", "application/vnd.github+json").build()
                 http.newCall(req).execute().use { res ->
                     if (!res.isSuccessful) return@runCatching null
+                    answered = true
                     val j = JSONObject(res.body?.string() ?: return@runCatching null)
                     if (j.optBoolean("prerelease") || j.optBoolean("draft")) return@runCatching null
                     val tag = j.optString("tag_name")
@@ -85,7 +87,7 @@ object Updater {
                 }
             }.getOrNull()
         }
-        prefs.edit().putLong("last", now).apply()
+        if (rel != null || answered) prefs.edit().putLong("last", now).apply() // offline: try again next launch
         available = rel?.takeIf { newer(it.version, BuildConfig.VERSION_NAME) }
     }
 
@@ -94,7 +96,9 @@ object Updater {
         val rel = available ?: return
         error = null; progress = 0f
         try {
-            val file = withContext(Dispatchers.IO) { download(context, rel) }
+            val cached = cachedFile(context, rel)
+            val file = if (cached.exists() && withContext(Dispatchers.IO) { verify(context, cached) } == null) cached
+                else withContext(Dispatchers.IO) { download(context, rel) }
             val problem = withContext(Dispatchers.IO) { verify(context, file) }
             if (problem != null) { file.delete(); error = problem; return }
             install(context, file)
@@ -103,9 +107,13 @@ object Updater {
         } finally { progress = null }
     }
 
+    private fun cachedFile(context: Context, rel: Release) =
+        File(File(context.cacheDir, "updates"), "crumina-${rel.version.replace(Regex("[^0-9A-Za-z.]"), "")}.apk")
+
     private fun download(context: Context, rel: Release): File {
-        val dir = File(context.cacheDir, "updates").apply { mkdirs() }
-        val out = File(dir, "crumina-${rel.version.replace(Regex("[^0-9A-Za-z.]"), "")}.apk")
+        File(context.cacheDir, "updates").mkdirs()
+        val part = File(cachedFile(context, rel).path + ".part")
+        val out = part
         http.newCall(Request.Builder().url(rel.apkUrl).build()).execute().use { res ->
             if (!res.isSuccessful) throw IllegalStateException("http ${res.code}")
             val body = res.body ?: throw IllegalStateException("empty")
@@ -123,7 +131,10 @@ object Updater {
                 }
             }
         }
-        return out
+        // Only a complete download gets the final name, so a cut-off file is never reused.
+        val done = cachedFile(context, rel); done.delete()
+        if (!out.renameTo(done)) throw IllegalStateException("rename")
+        return done
     }
 
     /** Null when the APK is a newer build of this app signed with the same key; otherwise a reason. */
@@ -132,9 +143,12 @@ object Updater {
         val flags = if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES else @Suppress("DEPRECATION") PackageManager.GET_SIGNATURES
         val archive = pm.getPackageArchiveInfo(apk.path, flags) ?: return "The downloaded file is not a valid app package."
         val installed = pm.getPackageInfo(context.packageName, flags)
+        // Some Android versions leave signingInfo empty for archives; GET_SIGNATURES still reports the signer.
+        @Suppress("DEPRECATION")
+        val archiveCerts = certs(archive).ifEmpty { pm.getPackageArchiveInfo(apk.path, PackageManager.GET_SIGNATURES)?.let { certs(it) } ?: emptySet() }
         if (archive.packageName != context.packageName) return "The update is for a different app."
         if (versionCode(archive) <= versionCode(installed)) return "The download is not newer than this version."
-        val a = certs(archive); val b = certs(installed)
+        val a = archiveCerts; val b = certs(installed)
         if (a.isEmpty() || a != b) return "The update is not signed by Crumina's key, so it was not installed."
         return null
     }
@@ -170,7 +184,7 @@ object Updater {
     private fun cleanup(context: Context) {
         File(context.cacheDir, "updates").listFiles()?.forEach { f ->
             val v = f.name.removePrefix("crumina-").removeSuffix(".apk")
-            if (!newer(v, BuildConfig.VERSION_NAME)) f.delete()
+            if (f.name.endsWith(".part") || !newer(v, BuildConfig.VERSION_NAME)) f.delete()
         }
     }
 }

@@ -12,6 +12,13 @@ object Num {
     private val commaDecimal = Regex("^\\d+,\\d{1,4}$")
     private val plain = Regex("^\\d+(\\.\\d+)?$")
 
+    /** For share units and per-unit prices: "1.250" is one and a quarter, not 1250. */
+    fun parseDecimal(input: String?): Double? {
+        val t = (input ?: "").trim().replace(" ", "")
+        if (t.count { it == '.' } <= 1 && plain.matches(t.removePrefix("-"))) return t.toDoubleOrNull()?.takeIf { it.isFinite() }
+        return parse(input)
+    }
+
     fun parse(input: String?): Double? {
         val t = (input ?: "").trim().removePrefix("Rp").removePrefix("rp").replace(" ", "").replace(" ", "")
         if (t.isEmpty() || t.length > 24) return null

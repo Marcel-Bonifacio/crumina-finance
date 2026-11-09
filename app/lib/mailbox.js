@@ -35,13 +35,22 @@ function gAttList(payload){
   (function walk(p){ if(!p) return; if(p.body&&p.body.attachmentId&&isPdf({filename:p.filename,mimeType:p.mimeType})&&(p.body.size||0)<=MAX_ATT) out.push({filename:p.filename||'',mimeType:p.mimeType||'',attId:p.body.attachmentId}); (p.parts||[]).forEach(walk); })(payload);
   return out;
 }
-// The receiving server's verdict on the sender (Authentication-Results, RFC 8601). A message whose
-// From domain fails DMARC, or fails SPF without a passing DKIM signature, is a spoof: drop it so a
-// forged "bank alert" cannot add transactions or balances.
-function spoofed(authResults){
+// The receiving server's verdict on the sender (Authentication-Results, RFC 8601). Only the top
+// header counts: it is the one our own mail server added; lower ones can come from the sender.
+// A bank message is trusted when DMARC passes, or when SPF or DKIM passes for the From domain
+// itself (aligned). Anything else claiming a bank's From address is a spoof: drop it, so a forged
+// "bank alert" cannot add transactions or balances. No header at all (some self-hosted IMAP
+// servers) means we cannot judge, so the message is kept.
+function domainOf(from){ var m=String(from||'').match(/@([A-Za-z0-9.-]+)/); return m?m[1].toLowerCase().replace(/\.$/,''):''; }
+function aligned(d,fromDom){ d=String(d||'').toLowerCase().replace(/^@/,''); return !!d&&!!fromDom&&(d===fromDom||fromDom.endsWith('.'+d)||d.endsWith('.'+fromDom)); }
+function spoofed(authResults, from){
   var a=String(authResults||'').toLowerCase(); if(!a) return false;
-  if(/\bdmarc=fail\b/.test(a)) return true;
-  return /\bspf=(fail|softfail)\b/.test(a) && !/\bdkim=pass\b/.test(a);
+  if(/\bdmarc=pass\b/.test(a)) return false;
+  var fd=domainOf(from), m, re=/\bdkim=pass\b[^;]*?header\.(?:d|i)=([^\s;]+)/g;
+  while((m=re.exec(a))) if(aligned(m[1].split('@').pop(),fd)) return false;
+  var sp=a.match(/\bspf=pass\b[^;]*?smtp\.mailfrom=([^\s;]+)/);
+  if(sp&&aligned(sp[1].split('@').pop(),fd)) return false;
+  return true;
 }
 function gmailMailbox(at){
   var g=require('./google');
@@ -51,7 +60,7 @@ function gmailMailbox(at){
     fetch:async function(uid,opts){ opts=opts||{}; var msg=await g.gmailGet(at,uid); var p=msg.payload||{}; var b=gBody(p);
       var atts=[];
       if(opts.attachments){ var list=gAttList(p); for(var i=0;i<list.length;i++){ var d=await g.gmailAttachment(at,uid,list[i].attId); atts.push({filename:list[i].filename,mimeType:list[i].mimeType,data:Buffer.from(d||'','base64url')}); } }
-      return { from:gHeader(p,'from'), subject:gHeader(p,'subject'), dateMs:Number(msg.internalDate)||Date.parse(gHeader(p,'date'))||Date.now(), html:b.html, text:b.text, attachments:atts, spoofed:spoofed(gHeader(p,'authentication-results')) };
+      return { from:gHeader(p,'from'), subject:gHeader(p,'subject'), dateMs:Number(msg.internalDate)||Date.parse(gHeader(p,'date'))||Date.now(), html:b.html, text:b.text, attachments:atts, spoofed:spoofed(gHeader(p,'authentication-results'), gHeader(p,'from')) };
     },
     close:async function(){}
   };
@@ -89,12 +98,16 @@ function imapMailbox(creds){
       uids=(uids||[]).slice(); uids.sort(function(a,b){return b-a;});
       return uids.slice(0, spec.max||20).map(function(u){return {uid:u};}); },
     fetch:async function(uid){ var cl=await conn(); var simpleParser=require('mailparser').simpleParser;
+      // Check the size first: a huge message would be downloaded and parsed in memory before the cap applied.
+      var info=await cl.fetchOne(String(uid),{size:true},{uid:true});
+      if(info&&info.size>3*MAX_ATT) return {from:'',subject:'',dateMs:Date.now(),html:'',text:'',attachments:[]};
       var m=await cl.fetchOne(String(uid),{source:true},{uid:true});
       if(!m||!m.source) return {from:'',subject:'',dateMs:Date.now(),html:'',text:'',attachments:[]};
       var p=await simpleParser(m.source);
       var atts=(p.attachments||[]).map(function(a){return {filename:a.filename||'',mimeType:a.contentType||'',data:a.content};}).filter(function(a){return isPdf(a)&&a.data&&a.data.length<=MAX_ATT;});
-      var ar=p.headers&&p.headers.get('authentication-results'); ar=Array.isArray(ar)?ar.join(' '):(ar&&ar.value)||ar||'';
-      return { from:(p.from&&p.from.text)||'', subject:p.subject||'', dateMs:(p.date&&p.date.getTime())||Date.now(), html:p.html||'', text:p.text||'', attachments:atts, spoofed:spoofed(ar) };
+      var ar=p.headers&&p.headers.get('authentication-results'); ar=Array.isArray(ar)?ar[0]:ar; ar=(ar&&ar.value)||ar||'';
+      var fromText=(p.from&&p.from.text)||'';
+      return { from:fromText, subject:p.subject||'', dateMs:(p.date&&p.date.getTime())||Date.now(), html:p.html||'', text:p.text||'', attachments:atts, spoofed:spoofed(String(ar), fromText) };
     },
     close:async function(){ if(client){ try{ await client.logout(); }catch(e){ try{ client.close(); }catch(_){} } client=null; } }
   };

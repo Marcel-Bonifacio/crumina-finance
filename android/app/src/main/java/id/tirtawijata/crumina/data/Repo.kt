@@ -192,6 +192,9 @@ object Repo {
             (if (transactions.isNotEmpty() || manualTx.isNotEmpty()) listOf("IDR") else emptyList()) + manualTx.map { it.ccy })
             .any { it != mainCcy && rate(it) == null }
 
+    /** True when [from] can be shown in the main currency right now. */
+    fun canConv(from: String?): Boolean = (from ?: mainCcy) == mainCcy || rate(from!!) != null
+
     fun conv(amount: Double, from: String?): Double {
         val f = from ?: mainCcy
         if (f == mainCcy) return amount
