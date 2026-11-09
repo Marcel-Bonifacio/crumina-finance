@@ -7,8 +7,8 @@
 <p align="center">Your money, all in one place, without handing it to anyone.</p>
 
 <p align="center">
-  <a href="LICENSE"><img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-0A1B3D"></a>
-  <img alt="Node 18+" src="https://img.shields.io/badge/node-18%2B-2FE0C2">
+  <a href="LICENSE"><img alt="License Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-0A1B3D"></a>
+  <img alt="Node 20.19+" src="https://img.shields.io/badge/node-20.19%2B-2FE0C2">
   <img alt="PWA installable" src="https://img.shields.io/badge/PWA-installable-0A1B3D">
   <img alt="No build step" src="https://img.shields.io/badge/build-none-2FE0C2">
   <img alt="Languages EN and ID" src="https://img.shields.io/badge/i18n-EN%20%7C%20ID-0A1B3D">
@@ -111,7 +111,7 @@ full picture, read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Quick start
 
-You need Node 18 or newer. The client has no build step, so there is nothing to
+You need Node 20.19 or newer (Node 22 LTS recommended). The client has no build step, so there is nothing to
 compile.
 
 ```bash
@@ -248,11 +248,9 @@ the bank registry, the security rules) before opening a pull request.
 
 ## License
 
-Crumina is released under the GNU Affero General Public License v3.0
-([LICENSE](LICENSE)). The AGPL's network clause is the part that matters here: if you
-run a modified copy as a service that others can reach, you must offer those users the
-source of your modified version. The repository link in `app/app.js` is how they reach
-it, so point it at your own source when you deploy.
+Crumina is released under the Apache License 2.0 ([LICENSE](LICENSE)). You may use,
+modify and redistribute it, including as a hosted service, provided you keep the
+license and copyright notices and mark files you changed.
 
 ## Third-party software
 

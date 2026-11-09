@@ -8,7 +8,10 @@ module.exports = (req, res) => {
   // Native app starts the flow with ?client=android; carry that in the OAuth state
   // (the nonce still does CSRF) so the callback knows to hand back tokens via App Link.
   const isAndroid = /[?&]client=android(?:&|$)/.test(req.url || '');
-  const state = isAndroid ? nonce + '.android' : nonce;
+  // The app's own one-time nonce rides along and is echoed in the App Link fragment,
+  // so the app can reject callbacks for logins it did not start (login CSRF).
+  const am = /[?&]app_state=([A-Za-z0-9_-]{16,64})(?:&|$)/.exec(req.url || '');
+  const state = isAndroid ? nonce + '.android' + (am ? '.' + am[1] : '') : nonce;
   res.setHeader('Set-Cookie', cookie('oauth_state', nonce, 600));
   res.writeHead(302, { Location: authUrl(state) }); res.end();
 };

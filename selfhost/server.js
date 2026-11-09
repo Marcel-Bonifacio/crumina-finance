@@ -1,7 +1,7 @@
 // Crumina self-host server (any Node host).
-// Runs the SAME app/ that the Vercel deployment serves: static frontend + the app/api/*.js handlers
-// (which are written in Node (req,res) style) + the session gate that app/middleware.js
-// (Vercel edge middleware) applies. No framework, only Node built-ins. Node 18+ (for global fetch).
+// Runs the SAME app/ that the managed host serves: static frontend + the app/api/*.js handlers
+// (which are written in Node (req,res) style) + the session gate that the platform
+// edge middleware does. No framework, only Node built-ins. Node 20.19+ (deps need it; global fetch).
 const http = require('http'), fs = require('fs'), path = require('path'), url = require('url');
 const APP = path.join(__dirname, '..', 'app');
 

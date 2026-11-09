@@ -54,6 +54,6 @@ ones. Be patient and constructive; reviewers will be the same.
 
 ## Licensing of contributions
 
-Crumina is licensed under the GNU Affero General Public License v3.0
+Crumina is licensed under the Apache License 2.0
 ([LICENSE](LICENSE)). By contributing, you agree that your contributions are licensed
 under the same terms. Only submit code you have the right to contribute.

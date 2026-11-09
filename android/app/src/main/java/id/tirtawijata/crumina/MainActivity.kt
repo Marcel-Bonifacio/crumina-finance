@@ -42,10 +42,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             CruminaTheme {
                 Surface(Modifier.fillMaxSize()) {
-                    if (loggedIn.value) {
+                    if (loggedIn.value && !Repo.sessionExpired) {
                         AppScaffold(onLogout = { Repo.logout(); loggedIn.value = false })
                     } else {
-                        LoginScreen { AuthManager.login(this) }
+                        LoginScreen(expired = Repo.sessionExpired) { AuthManager.login(this) }
                     }
                 }
             }
@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun LoginScreen(onLogin: () -> Unit) {
+private fun LoginScreen(expired: Boolean, onLogin: () -> Unit) {
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
@@ -87,6 +87,10 @@ private fun LoginScreen(onLogin: () -> Unit) {
         Text("Crumina", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(8.dp))
         Text("Your money, all in one place.", style = MaterialTheme.typography.bodyMedium)
+        if (expired) {
+            Spacer(Modifier.height(16.dp))
+            Text("Your session expired. Please sign in again.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+        }
         Spacer(Modifier.height(32.dp))
         Button(onClick = onLogin) { Text("Sign in with Google") }
     }

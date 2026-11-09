@@ -106,7 +106,7 @@ jobs:
           SRC="https://github.com/$GITHUB_REPOSITORY"
           NOTES="Crumina $TAG for Android. This signed APK was built by GitHub Actions from the source code at tag $TAG. Download the .apk file and sideload it to install.
 
-          Crumina is free software under the GNU Affero General Public License v3.0 and comes with no warranty.
+          Crumina is free software under the Apache License 2.0 and comes with no warranty.
           Source code for this build: $SRC/tree/$TAG (also attached below as the Source code archives).
           Licence: $SRC/blob/$TAG/LICENSE
           The APK also contains third-party libraries under their own licences, including the proprietary Google ML Kit. See $SRC/blob/$TAG/THIRD_PARTY_NOTICES.md"

@@ -54,13 +54,17 @@ verified App Link, and a server that hands the app a bearer token.
 
 ### Flow
 
-1. The app opens a **Chrome Custom Tab** to `GET /api/auth/start?client=android`.
+1. The app opens a **Chrome Custom Tab** to `GET /api/auth/start?client=android&app_state=<nonce>`.
+   The app keeps the one-time nonce in its encrypted store.
    (Custom Tabs are the Google-sanctioned external user-agent; they share the system
    browser's session and are not controllable by the app.)
 2. The server runs the same Google OAuth exchange as for the web client. It gets the
    user's profile and, when Google returns one, a refresh token, which it encrypts.
 3. Instead of setting cookies, the server returns a **302 to a verified App Link**:
-   `https://crumina.tirtawijata.com/auth/android#t=<session>&p=<profile>&rt=<enc_refresh>`
+   `https://crumina.tirtawijata.com/auth/android#t=<session>&p=<profile>&rt=<enc_refresh>&s=<nonce>`
+   The app drops any callback whose `s` does not match the single-use nonce it stored
+   before opening the browser, so a crafted link cannot sign the app into another
+   account (login CSRF).
    The payload rides in the URL fragment (after `#`), which the browser does not send
    to any server. The tokens are still in that URL, though, so whatever ends up
    handling it receives them. If the browser shows the fallback page, its script
