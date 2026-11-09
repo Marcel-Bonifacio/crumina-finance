@@ -106,7 +106,9 @@ object GoogleSignIn {
 
             // 3. Server exchange.
             val resp = Net.api(Repo.secureStore()).authCode(AuthCodeReq(code))
-            if (!resp.ok || resp.t == null) { error = Repo.t(if (resp.error == "gmail_scope_missing") "gmail_needed" else "signin_failed"); return null }
+            if (resp.error == "gmail_scope_missing") { error = Repo.t("gmail_needed"); return null }
+            // Any other failure: let the browser flow try (start() turns the exception into the fallback).
+            if (!resp.ok || resp.t == null) throw IllegalStateException("exchange: " + resp.error)
             return AuthTokens(resp.t, resp.p, resp.rt)
         } finally { busy = false }
     }

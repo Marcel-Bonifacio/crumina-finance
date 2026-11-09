@@ -31,7 +31,8 @@
     if(!/gmail\.readonly/.test(resp.scope||'')){ showErr("Crumina needs read access to Gmail to find your statements. Please allow it and try again."); return; }
     fetch('/api/auth/callback',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({client:'web',code:resp.code})})
       .then(function(r){return r.json();})
-      .then(function(j){ if(j&&j.ok){ location.href='/'; } else if(j&&(j.consent||j.error==='gmail_scope_missing')){ fallback(); } else { showErr('Sign-in failed. Please try again.'); } })
+      // Anything but success goes through the proven redirect flow, so sign-in never gets stuck here.
+      .then(function(j){ if(j&&j.ok){ location.href='/'; } else { fallback(); } })
       .catch(function(){ fallback(); });
   }
   function showErr(m){ var e=$('gErr'); if(!e){ e=document.createElement('p'); e.id='gErr'; e.style.cssText='color:#FFC9D4;margin:12px 0 0;opacity:1'; var g=$('gBtn'); if(g&&g.parentNode) g.parentNode.insertBefore(e,g.nextSibling); } e.textContent=m; }
