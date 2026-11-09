@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
  * In-app updates from GitHub Releases (the app is distributed as a signed APK, not through Play).
  *
  * 1. check(): asks the GitHub API for the latest non-prerelease, at most every few hours.
- * 2. download(): fetches its `crumina.apk` asset into the app cache.
+ * 2. download(): fetches its `crumina-<version>.apk` asset (or the older fixed-name `crumina.apk`) into the app cache.
  * 3. Before handing the file to the system installer, verifies it is this app (same package),
  *    newer (higher versionCode) and signed with the same certificate as the installed copy.
  *    Android enforces the signature match again at install time; checking first gives a clear error.
@@ -76,11 +76,18 @@ object Updater {
                     if (j.optBoolean("prerelease") || j.optBoolean("draft")) return@runCatching null
                     val tag = j.optString("tag_name")
                     val assets = j.optJSONArray("assets") ?: return@runCatching null
+                    // Prefer the versioned asset (crumina-0.7.0.apk); releases up to 0.6.0 only have crumina.apk.
+                    val want = "crumina-" + tag.removePrefix("v") + ".apk"
                     var url: String? = null
+                    var legacy: String? = null
                     for (i in 0 until assets.length()) {
                         val a = assets.getJSONObject(i)
-                        if (a.optString("name") == "crumina.apk") url = a.optString("browser_download_url")
+                        when (a.optString("name")) {
+                            want -> url = a.optString("browser_download_url")
+                            "crumina.apk" -> legacy = a.optString("browser_download_url")
+                        }
                     }
+                    if (url == null) url = legacy
                     // Only ever download from this repository's own release assets.
                     val ok = url?.startsWith("https://github.com/Marcel-Bonifacio/crumina-finance/releases/download/") == true
                     if (tag.isBlank() || !ok) null else Release(tag, tag.removePrefix("v"), j.optString("body").take(600), url!!)
