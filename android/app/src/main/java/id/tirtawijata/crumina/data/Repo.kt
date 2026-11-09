@@ -15,7 +15,9 @@ object Repo {
     private lateinit var store: Store
     private lateinit var secure: SecureStore
     private var ready = false
-    private val mapType = object : TypeToken<Map<String, String>>() {}.type
+    // getParameterized, not an anonymous TypeToken subclass: R8 strips the generic
+    // signature that the anonymous form relies on, which crashed release builds at startup.
+    private val mapType = TypeToken.getParameterized(Map::class.java, String::class.java, String::class.java).type
 
     // settings
     var mainCcy by mutableStateOf("IDR")
