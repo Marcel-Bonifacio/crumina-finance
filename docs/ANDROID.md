@@ -338,7 +338,8 @@ The app updates itself from GitHub Releases, since it is not distributed through
 1. On launch (at most every 6 hours) and from **Settings → Check for updates**, it asks the
    GitHub API for the latest non-prerelease release and compares its tag with the installed
    `versionName`.
-2. If newer, a dialog offers **Update**. The app downloads that release's `crumina.apk`
+2. If newer, a dialog offers **Update**. The app downloads that release's `crumina-<version>.apk`
+   (or `crumina.apk`, the fixed-name copy kept for the updater in 0.4.0–0.6.0)
    asset (only from this repository's release URLs, at most 150 MB) into its cache.
 3. Before installing, it checks that the file is this app (`id.tirtawijata.crumina`), has a
    higher `versionCode`, and is signed with the same certificate as the installed copy. Any

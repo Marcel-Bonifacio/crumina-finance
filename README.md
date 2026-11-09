@@ -7,7 +7,7 @@
 <p align="center">Your money, all in one place, without handing it to anyone.</p>
 
 <p align="center">
-  <a href="https://github.com/Marcel-Bonifacio/crumina-finance/releases/latest/download/crumina.apk"><img alt="Download for Android" src="https://img.shields.io/badge/Download-Android%20APK-2FE0C2?style=for-the-badge&logo=android&logoColor=0A1B3D"></a>
+  <a href="https://github.com/Marcel-Bonifacio/crumina-finance/releases/latest"><img alt="Download for Android" src="https://img.shields.io/badge/Download-Android%20APK-2FE0C2?style=for-the-badge&logo=android&logoColor=0A1B3D"></a>
 </p>
 
 <p align="center">
@@ -205,7 +205,7 @@ transaction database.
 
 ## Android app
 
-[Download the latest APK](https://github.com/Marcel-Bonifacio/crumina-finance/releases/latest/download/crumina.apk)
+[Download the latest APK](https://github.com/Marcel-Bonifacio/crumina-finance/releases/latest) (`crumina-<version>.apk`)
 (Android 8.0 or newer).
 
 The Android app is Kotlin and Jetpack Compose, and it talks to the same backend as the

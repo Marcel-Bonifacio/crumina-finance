@@ -15,6 +15,8 @@ android {
         targetSdk = 35
         versionCode = 8
         versionName = "0.6.0"
+        // APK files are named after the version: crumina-0.6.0-release.apk, crumina-0.6.0-debug.apk.
+        setProperty("archivesBaseName", "crumina-$versionName")
         buildConfigField("String", "API_BASE", "\"https://crumina.tirtawijata.com\"")
         // The server's web OAuth client: Android sign-in asks Google for an ID token and a server auth
         // code addressed to it (the Android OAuth client is matched by package name + signing SHA-1).
