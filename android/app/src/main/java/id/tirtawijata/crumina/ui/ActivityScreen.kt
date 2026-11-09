@@ -124,9 +124,9 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
-                enabled = amount.toDoubleOrNull() != null && merchant.isNotBlank(),
+                enabled = id.tirtawijata.crumina.data.Num.parse(amount) != null && merchant.isNotBlank(),
                 onClick = {
-                    r.addManualTx(ManualTx(amount.toDoubleOrNull() ?: 0.0, merchant.trim(), category, date.trim(), r.mainCcy))
+                    r.addManualTx(ManualTx(id.tirtawijata.crumina.data.Num.parse(amount) ?: 0.0, merchant.trim(), category, date.trim(), r.mainCcy))
                     onDismiss()
                 }
             ) { Text(r.t("save")) }

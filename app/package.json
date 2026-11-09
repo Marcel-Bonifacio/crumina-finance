@@ -8,7 +8,7 @@
     "node": ">=20.19"
   },
   "scripts": {
-    "test": "node test/parse.test.js"
+    "test": "node test/parse.test.js && node test/security.test.js"
   },
   "dependencies": {
     "imapflow": "^1.7.8",

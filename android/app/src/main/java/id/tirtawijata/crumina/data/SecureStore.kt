@@ -1,23 +1,11 @@
 package id.tirtawijata.crumina.data
 
 import android.content.Context
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 
 /** Keystore-backed storage for session token, Gmail refresh token, and statement passwords. */
 class SecureStore(context: Context) {
 
-    private val masterKey = MasterKey.Builder(context)
-        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build()
-
-    private val prefs = EncryptedSharedPreferences.create(
-        context,
-        "crumina_secure",
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    private val prefs = encryptedPrefs(context, "crumina_secure")
 
     var session: String?
         get() = prefs.getString("session", null)

@@ -26,10 +26,22 @@ function gBody(payload){
   })(payload);
   return {html:html,text:text};
 }
+// Only PDFs are ever parsed, so only PDFs are downloaded, and never one over MAX_ATT bytes:
+// anyone can email the user a huge "statement" from a spoofed bank address.
+var MAX_ATT=8*1024*1024;
+function isPdf(a){ return /\.pdf$/i.test(a.filename||'') || a.mimeType==='application/pdf'; }
 function gAttList(payload){
   var out=[];
-  (function walk(p){ if(!p) return; if(p.body&&p.body.attachmentId) out.push({filename:p.filename||'',mimeType:p.mimeType||'',attId:p.body.attachmentId}); (p.parts||[]).forEach(walk); })(payload);
+  (function walk(p){ if(!p) return; if(p.body&&p.body.attachmentId&&isPdf({filename:p.filename,mimeType:p.mimeType})&&(p.body.size||0)<=MAX_ATT) out.push({filename:p.filename||'',mimeType:p.mimeType||'',attId:p.body.attachmentId}); (p.parts||[]).forEach(walk); })(payload);
   return out;
+}
+// The receiving server's verdict on the sender (Authentication-Results, RFC 8601). A message whose
+// From domain fails DMARC, or fails SPF without a passing DKIM signature, is a spoof: drop it so a
+// forged "bank alert" cannot add transactions or balances.
+function spoofed(authResults){
+  var a=String(authResults||'').toLowerCase(); if(!a) return false;
+  if(/\bdmarc=fail\b/.test(a)) return true;
+  return /\bspf=(fail|softfail)\b/.test(a) && !/\bdkim=pass\b/.test(a);
 }
 function gmailMailbox(at){
   var g=require('./google');
@@ -39,7 +51,7 @@ function gmailMailbox(at){
     fetch:async function(uid,opts){ opts=opts||{}; var msg=await g.gmailGet(at,uid); var p=msg.payload||{}; var b=gBody(p);
       var atts=[];
       if(opts.attachments){ var list=gAttList(p); for(var i=0;i<list.length;i++){ var d=await g.gmailAttachment(at,uid,list[i].attId); atts.push({filename:list[i].filename,mimeType:list[i].mimeType,data:Buffer.from(d||'','base64url')}); } }
-      return { from:gHeader(p,'from'), subject:gHeader(p,'subject'), dateMs:Number(msg.internalDate)||Date.parse(gHeader(p,'date'))||Date.now(), html:b.html, text:b.text, attachments:atts };
+      return { from:gHeader(p,'from'), subject:gHeader(p,'subject'), dateMs:Number(msg.internalDate)||Date.parse(gHeader(p,'date'))||Date.now(), html:b.html, text:b.text, attachments:atts, spoofed:spoofed(gHeader(p,'authentication-results')) };
     },
     close:async function(){}
   };
@@ -61,7 +73,10 @@ function imapMailbox(creds){
   async function conn(){
     if(client) return client;
     var ImapFlow=require('imapflow').ImapFlow;
-    client=new ImapFlow({ host:creds.host, port:creds.port||993, secure:creds.secure!==false, auth:{user:creds.user,pass:creds.pass}, logger:false, emitLogs:false });
+    // Re-check the host on every connection: DNS can change after sign-in (rebinding to an internal IP).
+    var addr=await require('./netguard').resolvePublic(creds.host);
+    if(!addr) throw new Error('imap host not allowed');
+    client=new ImapFlow({ host:addr, servername:creds.host, port:993, secure:true, auth:{user:creds.user,pass:creds.pass}, logger:false, emitLogs:false, connectionTimeout:10000, greetingTimeout:10000 });
     await client.connect();
     await client.mailboxOpen('INBOX');
     return client;
@@ -77,8 +92,9 @@ function imapMailbox(creds){
       var m=await cl.fetchOne(String(uid),{source:true},{uid:true});
       if(!m||!m.source) return {from:'',subject:'',dateMs:Date.now(),html:'',text:'',attachments:[]};
       var p=await simpleParser(m.source);
-      var atts=(p.attachments||[]).map(function(a){return {filename:a.filename||'',mimeType:a.contentType||'',data:a.content};});
-      return { from:(p.from&&p.from.text)||'', subject:p.subject||'', dateMs:(p.date&&p.date.getTime())||Date.now(), html:p.html||'', text:p.text||'', attachments:atts };
+      var atts=(p.attachments||[]).map(function(a){return {filename:a.filename||'',mimeType:a.contentType||'',data:a.content};}).filter(function(a){return isPdf(a)&&a.data&&a.data.length<=MAX_ATT;});
+      var ar=p.headers&&p.headers.get('authentication-results'); ar=Array.isArray(ar)?ar.join(' '):(ar&&ar.value)||ar||'';
+      return { from:(p.from&&p.from.text)||'', subject:p.subject||'', dateMs:(p.date&&p.date.getTime())||Date.now(), html:p.html||'', text:p.text||'', attachments:atts, spoofed:spoofed(ar) };
     },
     close:async function(){ if(client){ try{ await client.logout(); }catch(e){ try{ client.close(); }catch(_){} } client=null; } }
   };
@@ -94,4 +110,4 @@ async function getMailbox(req){
   if(rt){ try{ var at=await require('./google').refresh(decrypt(rt)); return gmailMailbox(at); }catch(e){ return null; } }
   return null;
 }
-module.exports={ getMailbox, gmailMailbox, imapMailbox, gmailQuery, imapSearchQuery, imapEnabled };
+module.exports={ getMailbox, gmailMailbox, imapMailbox, gmailQuery, imapSearchQuery, imapEnabled, spoofed, MAX_ATT };

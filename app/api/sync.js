@@ -16,6 +16,7 @@ module.exports = async (req, res) => {
     const raw = [];
     for (const r of refs) {
       const msg = await mbox.fetch(r.uid);
+      if (msg.spoofed) continue; // failed sender authentication: a forged alert
       const body = msg.html || msg.text || ''; if (!body) continue;
       const tx = parseAlert(msg.from, msg.subject, strip(body));
       if (tx) raw.push(tx);

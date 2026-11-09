@@ -297,6 +297,34 @@ existing `app/` (same code as the web deploy) with these set:
   adb shell pm get-app-links id.tirtawijata.crumina   # crumina.tirtawijata.com: verified
   ```
 
+## Updates
+
+The app updates itself from GitHub Releases, since it is not distributed through Play:
+
+1. On launch (at most every 6 hours) and from **Settings → Check for updates**, it asks the
+   GitHub API for the latest non-prerelease release and compares its tag with the installed
+   `versionName`.
+2. If newer, a dialog offers **Update**. The app downloads that release's `crumina.apk`
+   asset (only from this repository's release URLs, at most 150 MB) into its cache.
+3. Before installing, it checks that the file is this app (`id.tirtawijata.crumina`), has a
+   higher `versionCode`, and is signed with the same certificate as the installed copy. Any
+   mismatch deletes the file and shows why.
+4. It then opens the system installer through a `FileProvider` URI. Android asks once for
+   "Install unknown apps" permission for Crumina, and asks the user to confirm each install;
+   silent installs are not possible for sideloaded apps.
+
+The check uses its own HTTP client, so the session token is never sent to GitHub. Releases
+tagged with a suffix (`v1.2.3-beta.1`) are pre-releases and are not offered.
+
+`REQUEST_INSTALL_PACKAGES` is not allowed for apps on Google Play. If the app is ever
+published there, remove the updater and let Play handle updates.
+
+## Appearance
+
+Light is the default regardless of the system theme. **Settings → Appearance** switches to
+Dark or High contrast (black lines, darker accents, matching the web app's contrast theme).
+The choice is kept across sign-out.
+
 ## Previewing screens (debug builds only)
 
 Debug builds include `PreviewActivity` (in `app/src/debug`), which fills the app with sample

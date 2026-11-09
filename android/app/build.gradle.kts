@@ -7,14 +7,14 @@ val ksPath: String? = System.getenv("ANDROID_KEYSTORE_PATH")?.takeIf { it.isNotB
 
 android {
     namespace = "id.tirtawijata.crumina"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "id.tirtawijata.crumina"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 5
-        versionName = "0.3.0"
+        targetSdk = 35
+        versionCode = 6
+        versionName = "0.4.0"
         buildConfigField("String", "API_BASE", "\"https://crumina.tirtawijata.com\"")
     }
 
@@ -82,5 +82,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    // Align every kotlin-stdlib artifact (jdk7/jdk8 were resolving to 1.9.10 next to stdlib 1.9.24).
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.9.24"))
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

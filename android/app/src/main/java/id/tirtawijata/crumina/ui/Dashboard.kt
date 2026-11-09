@@ -133,8 +133,8 @@ private fun BudgetDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                val cats = r.budgetCategories.associateWith { (catInputs[it]?.toDoubleOrNull() ?: 0.0) }.filter { it.value > 0.0 }
-                r.saveBudget(Budget(period, overall.toDoubleOrNull() ?: 0.0, cats))
+                val cats = r.budgetCategories.associateWith { id.tirtawijata.crumina.data.Num.parse(catInputs[it]) ?: 0.0 }.filter { it.value > 0.0 }
+                r.saveBudget(Budget(period, id.tirtawijata.crumina.data.Num.parse(overall) ?: 0.0, cats))
                 onDismiss()
             }) { Text(r.t("save")) }
         },
@@ -216,7 +216,7 @@ private fun GoalDialog(index: Int, onDismiss: () -> Unit) {
             TextButton(
                 enabled = name.isNotBlank(),
                 onClick = {
-                    val g = id.tirtawijata.crumina.data.Goal(name.trim(), target.toDoubleOrNull() ?: 0.0, saved.toDoubleOrNull() ?: 0.0)
+                    val g = id.tirtawijata.crumina.data.Goal(name.trim(), id.tirtawijata.crumina.data.Num.parse(target) ?: 0.0, id.tirtawijata.crumina.data.Num.parse(saved) ?: 0.0)
                     if (index >= 0) r.updateGoal(index, g) else r.addGoal(g)
                     onDismiss()
                 }

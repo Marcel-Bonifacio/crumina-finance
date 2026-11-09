@@ -6,18 +6,8 @@ const { sign, cookie } = require('../lib/session');
 const { encrypt } = require('../lib/crypto');
 const { rateLimit } = require('../lib/ratelimit');
 const PRESETS = { gmail:{host:'imap.gmail.com',port:993}, outlook:{host:'outlook.office365.com',port:993}, icloud:{host:'imap.mail.me.com',port:993} };
-// Pre-auth endpoint, so never let it reach loopback/private/link-local/multicast/reserved addresses
-// (internal port scanning). IMAP_ALLOW_PRIVATE=1 allows a mail server on the LAN.
-const net = require('net'), BLOCKED = new net.BlockList();
-[['0.0.0.0',8],['10.0.0.0',8],['100.64.0.0',10],['127.0.0.0',8],['169.254.0.0',16],['172.16.0.0',12],['192.0.0.0',24],['192.168.0.0',16],['198.18.0.0',15],['224.0.0.0',3]].forEach(function(s){ BLOCKED.addSubnet(s[0], s[1], 'ipv4'); });
-[['::',127],['fc00::',7],['fe80::',10],['ff00::',8]].forEach(function(s){ BLOCKED.addSubnet(s[0], s[1], 'ipv6'); });
-async function publicHost(host){
-  if (process.env.IMAP_ALLOW_PRIVATE === '1') return true;
-  try {
-    const a = await require('dns').promises.lookup(host, { all: true });
-    return a.length > 0 && !a.some(function(x){ const ip = x.address.replace(/^::ffff:(?=\d+\.\d+\.\d+\.\d+$)/i, ''); return BLOCKED.check(ip, net.isIPv6(ip) ? 'ipv6' : 'ipv4'); });
-  } catch (e) { return false; }
-}
+// Pre-auth endpoint: the host is checked by netguard, which also pins the IP we connect to.
+const { resolvePublic } = require('../lib/netguard');
 function readBody(req){ return new Promise(function(resolve){ var b='',big=false; req.on('data',function(c){ b+=c; if(b.length>4096){ big=true; b=''; req.destroy(); } }); req.on('end',function(){ resolve(big?'':b); }); req.on('close',function(){ resolve(big?'':b); }); req.on('error',function(){ resolve(''); }); }); }
 function back(res, code){ res.writeHead(302, { Location: '/login?imap=' + code }); res.end(); }
 module.exports = async (req, res) => {
@@ -48,9 +38,11 @@ module.exports = async (req, res) => {
       if (!email || !pass || !host) return back(res, 'missing');
       if (!port || isNaN(port)) port = 993;
       // Implicit TLS (secure: true) only works on 993, so that is the only port we connect to.
-      if (port !== 993 || !(await publicHost(host))) return back(res, 'host');
+      const addr = port === 993 ? await resolvePublic(host) : null;
+      if (!addr) return back(res, 'host');
       const { ImapFlow } = require('imapflow');
-      const client = new ImapFlow({ host, port, secure: true, auth: { user: email, pass }, logger: false, emitLogs: false, connectionTimeout: 10000, greetingTimeout: 10000 });
+      // Connect to the vetted address; TLS still verifies the certificate against the host name.
+      const client = new ImapFlow({ host: addr, servername: host, port, secure: true, auth: { user: email, pass }, logger: false, emitLogs: false, connectionTimeout: 10000, greetingTimeout: 10000 });
       try { await client.connect(); await client.logout(); }
       catch (e) { try { client.close(); } catch (_) {} return back(res, 'auth'); }
       const creds = encrypt(JSON.stringify({ host, port, secure: true, user: email, pass }));

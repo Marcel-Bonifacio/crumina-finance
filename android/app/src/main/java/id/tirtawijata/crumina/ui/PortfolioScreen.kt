@@ -84,7 +84,7 @@ fun AddHoldingDialog(onDismiss: () -> Unit, onSave: (Holding) -> Unit) {
     var units by remember { mutableStateOf("") }
     var avg by remember { mutableStateOf("") }
     var ccy by remember { mutableStateOf("USD") }
-    val valid = symbol.isNotBlank() && units.toDoubleOrNull() != null
+    val valid = symbol.isNotBlank() && id.tirtawijata.crumina.data.Num.parse(units) != null
     CrDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -95,8 +95,8 @@ fun AddHoldingDialog(onDismiss: () -> Unit, onSave: (Holding) -> Unit) {
                         Holding(
                             symbol.trim().uppercase(),
                             name.trim(),
-                            units.toDoubleOrNull() ?: 0.0,
-                            avg.toDoubleOrNull() ?: 0.0,
+                            id.tirtawijata.crumina.data.Num.parse(units) ?: 0.0,
+                            id.tirtawijata.crumina.data.Num.parse(avg) ?: 0.0,
                             0.0,
                             ccy.trim().ifBlank { "USD" }.uppercase()
                         )

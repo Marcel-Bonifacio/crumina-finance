@@ -82,6 +82,7 @@ fun AppBackground(content: @Composable BoxScope.() -> Unit) {
     val cr = LocalCr.current
     Box(
         Modifier.fillMaxSize().background(cr.bg).drawBehind {
+            if (cr.contrast) return@drawBehind // plain white in high contrast
             drawRect(Brush.radialGradient(listOf(Color(0xFF16C7A8).copy(alpha = 0.10f), Color.Transparent),
                 center = Offset(size.width * 0.88f, -size.height * 0.04f), radius = size.width * 1.2f))
             drawRect(Brush.radialGradient(listOf(Color(0xFF2D5BD0).copy(alpha = if (cr.dark) 0.16f else 0.10f), Color.Transparent),
@@ -105,7 +106,9 @@ fun CrCard(
     val cr = LocalCr.current
     val shape = RoundedCornerShape(24.dp)
     Column(
-        modifier.fillMaxWidth().softShadow(shape, cr.dark).clip(shape).background(cr.card).padding(horizontal = 20.dp, vertical = 20.dp)
+        modifier.fillMaxWidth().softShadow(shape, cr.dark).clip(shape).background(cr.card)
+            .then(if (cr.contrast) Modifier.border(1.5.dp, cr.line, shape) else Modifier)
+            .padding(horizontal = 20.dp, vertical = 20.dp)
     ) {
         if (title != null) {
             Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
