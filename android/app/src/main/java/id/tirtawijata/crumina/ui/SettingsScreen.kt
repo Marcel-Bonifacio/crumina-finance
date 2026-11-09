@@ -48,6 +48,8 @@ fun SettingsScreen(onLogout: () -> Unit, onSync: () -> Unit) {
     val r = Repo
     val cr = LocalCr.current
     var showUnlock by remember { mutableStateOf(false) }
+    var editName by remember { mutableStateOf(false) }
+    var confirmLogout by remember { mutableStateOf(false) }
     PageHeader(r.t("settings"))
 
     SectionLabel(r.t("sec_account"))
@@ -56,9 +58,14 @@ fun SettingsScreen(onLogout: () -> Unit, onSync: () -> Unit) {
             Avatar(r.initial, 48)
             Spacer(Modifier.width(14.dp))
             Column {
-                Ink(r.profile?.name ?: r.firstName ?: "Crumina", 16.sp, FontWeight.Bold)
-                Muted(r.profile?.email ?: r.t("google_acct"), 12.sp)
+                Ink(r.displayName ?: r.profile?.name ?: r.firstName ?: "Crumina", 16.sp, FontWeight.Bold)
+                Muted(if (r.localMode) r.t("local_mode") else r.profile?.email ?: r.t("google_acct"), 12.sp)
             }
+        }
+        SettingRow(r.t("display_name"), r.displayName ?: r.firstName ?: r.t("display_name_sub"), onClick = { editName = true }) { Chevron() }
+        if (r.localMode) {
+            val activity = androidx.compose.ui.platform.LocalContext.current
+            SettingRow(r.t("connect_google"), r.t("connect_google_sub"), onClick = { id.tirtawijata.crumina.auth.AuthManager.login(activity) }) { Chevron() }
         }
     }
     Gap()
@@ -84,21 +91,39 @@ fun SettingsScreen(onLogout: () -> Unit, onSync: () -> Unit) {
 
     SectionLabel(r.t("sec_data"))
     CrCard {
-        SettingRow(r.t("statement_unlock"), r.t("stmt_unlock_sub"), first = true, onClick = { showUnlock = true }) { Chevron() }
+        if (!r.localMode) SettingRow(r.t("statement_unlock"), r.t("stmt_unlock_sub"), first = true, onClick = { showUnlock = true }) { Chevron() }
         val ctx = androidx.compose.ui.platform.LocalContext.current
         val scope = rememberCoroutineScope()
         var checked by remember { mutableStateOf(false) }
         SettingRow(r.t("check_updates"), if (checked && id.tirtawijata.crumina.data.Updater.available == null) r.t("up_to_date") else String.format(r.t("check_updates_sub"), id.tirtawijata.crumina.BuildConfig.VERSION_NAME),
-            onClick = { scope.launch { id.tirtawijata.crumina.data.Updater.dismissedTag = null; id.tirtawijata.crumina.data.Updater.check(ctx.applicationContext, force = true); checked = true } }) { Chevron() }
-        SettingRow(if (r.loading) r.t("syncing") else r.t("sync"), r.t("sync_sub"), onClick = if (r.loading) null else onSync) { Chevron() }
+            first = r.localMode, onClick = { scope.launch { id.tirtawijata.crumina.data.Updater.dismissedTag = null; id.tirtawijata.crumina.data.Updater.check(ctx.applicationContext, force = true); checked = true } }) { Chevron() }
+        if (!r.localMode) SettingRow(if (r.loading) r.t("syncing") else r.t("sync"), r.t("sync_sub"), onClick = if (r.loading) null else onSync) { Chevron() }
     }
     Spacer(Modifier.height(18.dp))
     Box(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(13.dp)).background(cr.card)
-            .border(1.dp, Color(0xFFF5C2CE), RoundedCornerShape(13.dp)).clickable(onClick = onLogout).padding(vertical = 14.dp),
+            .border(1.dp, Color(0xFFF5C2CE), RoundedCornerShape(13.dp)).clickable { confirmLogout = true }.padding(vertical = 14.dp),
         contentAlignment = Alignment.Center
-    ) { Ink(r.t("log_out"), 14.sp, FontWeight.ExtraBold, color = cr.red) }
+    ) { Ink(if (r.localMode) r.t("leave_local") else r.t("log_out"), 14.sp, FontWeight.ExtraBold, color = cr.red) }
     if (showUnlock) StatementUnlockDialog(onDismiss = { showUnlock = false })
+    if (editName) {
+        var v by remember { mutableStateOf(r.displayName ?: r.firstName ?: "") }
+        CrDialog(
+            onDismissRequest = { editName = false },
+            title = { Text(r.t("display_name")) },
+            text = { CrField(v, { v = it.take(40) }, label = { Text(r.t("your_name")) }) },
+            confirmButton = { TextButton(onClick = { r.chooseDisplayName(v); editName = false }) { Text(r.t("save")) } },
+            dismissButton = { TextButton(onClick = { editName = false }) { Text(r.t("cancel")) } }
+        )
+    }
+    // Logging out wipes this phone's Crumina data, so it is confirmed first (as on the web).
+    if (confirmLogout) CrDialog(
+        onDismissRequest = { confirmLogout = false },
+        title = { Text(r.t("logout_title")) },
+        text = { Muted(r.t("logout_body"), 13.sp) },
+        confirmButton = { TextButton(onClick = { confirmLogout = false; onLogout() }) { Text(if (r.localMode) r.t("leave_local") else r.t("log_out"), color = cr.red) } },
+        dismissButton = { TextButton(onClick = { confirmLogout = false }) { Text(r.t("cancel")) } }
+    )
 }
 
 /** Settings row (`.set-row`): title + muted subtitle on the left, control on the right. */

@@ -8,6 +8,7 @@ import retrofit2.http.Query
 
 interface Api {
     @GET("api/data") suspend fun data(): DataResponse
+    @GET("api/guest") suspend fun guestToken(@Query("client") client: String = "android"): GuestResponse
     @GET("api/fx") suspend fun fx(@Query("base") base: String): FxResponse
     @GET("api/sync") suspend fun sync(@Header("X-Cr-Rt") rt: String?): SyncResponse
     @GET("api/statements") suspend fun statements(@Header("X-Cr-Rt") rt: String?, @Header("X-Cr-Pw") pw: String?): StatementsResponse

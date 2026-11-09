@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName
 // ---- API responses ----
 data class Profile(val email: String? = null, val name: String? = null, val picture: String? = null)
 data class DataResponse(val profile: Profile? = null)
+data class GuestResponse(val token: String? = null)
 
 data class FxResponse(val base: String? = null, val rates: Map<String, Double>? = null)
 

@@ -1,5 +1,6 @@
 // Local auth endpoint (one serverless function to stay within plan limits):
 //   GET  /api/guest            -> issue a local/guest session (no Google)
+//   GET  /api/guest?client=android -> the same session as JSON {token} for the native app's local mode
 //   GET  /api/guest?config=1   -> public: which auth methods this deployment supports
 //   POST /api/guest            -> IMAP sign-in (self-host only; gated by IMAP_ENABLED)
 const { sign, cookie } = require('../lib/session');
@@ -59,6 +60,11 @@ module.exports = async (req, res) => {
 
   // --- default: local/guest session ---
   if (!rateLimit(req, res, { name: 'guest', max: 20 })) return;
+  // Native app (no cookies): the same guest session, returned as a Bearer token for local mode.
+  if ('client' in q && q.client === 'android') {
+    res.setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store');
+    return res.end(JSON.stringify({ token: sign('guest') }));
+  }
   const prof = Buffer.from(JSON.stringify({ email: 'guest', name: 'Local', picture: '' })).toString('base64url');
   res.setHeader('Set-Cookie', [ cookie('tally_session', sign('guest'), 30 * 86400), cookie('tally_prof', prof, 30 * 86400) ]);
   res.writeHead(302, { Location: '/' }); res.end();

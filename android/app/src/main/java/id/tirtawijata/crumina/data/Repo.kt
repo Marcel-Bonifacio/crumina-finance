@@ -25,6 +25,9 @@ object Repo {
     var hideAmounts by mutableStateOf(false)
     /** "light" (default), "dark" or "contrast". */
     var theme by mutableStateOf("light")
+    /** No Google account: local data only, plus the public features (rates, quotes, PDF upload). */
+    var localMode by mutableStateOf(false)
+    var displayName by mutableStateOf<String?>(null)
 
     // local data
     var accounts by mutableStateOf<List<Account>>(emptyList())
@@ -58,6 +61,7 @@ object Repo {
         store = Store(context.applicationContext)
         secure = SecureStore(context.applicationContext)
         mainCcy = store.mainCcy; lang = store.lang; hideAmounts = store.hideAmounts; theme = store.theme
+        localMode = store.localMode; displayName = store.displayName
         accounts = store.accounts; holdings = store.holdings
         manualTx = store.manualTx; uploadedAccounts = store.uploadedAccounts
         store.profileJson?.let { profile = runCatching { Gson().fromJson(it, Profile::class.java) }.getOrNull() }
@@ -71,7 +75,25 @@ object Repo {
         ready = true
     }
 
-    val isLoggedIn: Boolean get() = ready && secure.isLoggedIn
+    val isLoggedIn: Boolean get() = ready && (secure.isLoggedIn || localMode)
+
+    /** Start local mode with an optional name. A guest token for the public API is fetched on refresh. */
+    fun startLocal(name: String?) {
+        localMode = true; store.localMode = true
+        chooseDisplayName(name)
+        sessionExpired = false
+    }
+
+    fun chooseDisplayName(name: String?) {
+        val n = name?.trim()?.take(40)?.takeIf { it.isNotEmpty() }
+        displayName = n; store.displayName = n
+    }
+
+    /** Local mode uses the server's guest session (30 days) for quotes and PDF upload; renew it before it lapses. */
+    private suspend fun ensureGuestToken(api: Api) {
+        if (secure.session != null && System.currentTimeMillis() - store.guestAt < 25L * 864e5.toLong()) return
+        quiet { api.guestToken().token }?.let { secure.session = it; store.guestAt = System.currentTimeMillis() }
+    }
 
     /** Start a login: remember a fresh nonce that the callback has to return. */
     fun newLoginState(): String {
@@ -98,6 +120,8 @@ object Repo {
 
     fun setSession(token: String, refreshToken: String?) {
         sessionExpired = false
+        // Signing in with Google ends local mode; the local data stays and joins the account.
+        if (localMode) { localMode = false; store.localMode = false }
         secure.session = token
         if (refreshToken != null) secure.refreshToken = refreshToken
     }
@@ -114,15 +138,24 @@ object Repo {
             val base = mainCcy
             val rates = runCatching { api.fx(base).rates }.getOrNull()
             if (!rates.isNullOrEmpty() && base == mainCcy) { fx = rates; fxBase = base; store.fxJson = Gson().toJson(FxResponse(base, rates)) }
-            // Check the session first: a 401 here means sign in again, not "no data".
-            val data = try { api.data() } catch (e: retrofit2.HttpException) {
-                if (e.code() == 401) { expireSession(); return }
-                null
-            } catch (e: Exception) { null }
-            data?.profile?.let { profile = it }
-            // Keep what we had when a call fails (timeout, 429, offline) instead of blanking it.
-            quiet { api.sync(secure.refreshToken).data?.transactions }?.let { transactions = it }
-            quiet { api.statements(secure.refreshToken, pwHeader()).accounts }?.let { stmtAccounts = it.filter { a -> a.error == null } }
+            if (localMode) {
+                ensureGuestToken(api) // no mailbox: only rates and quotes below
+            } else {
+                // Check the session first: a 401 here means sign in again, not "no data".
+                val data = try { api.data() } catch (e: retrofit2.HttpException) {
+                    if (e.code() == 401) { expireSession(); return }
+                    null
+                } catch (e: Exception) { null }
+                // The app authenticates with a Bearer token, so /api/data only knows the email and returns
+                // a profile without the name. Keep the Google name and picture saved at sign-in.
+                data?.profile?.let { p ->
+                    val old = profile
+                    profile = Profile(email = p.email ?: old?.email, name = p.name?.takeIf { it.isNotBlank() } ?: old?.name, picture = p.picture?.takeIf { it.isNotBlank() } ?: old?.picture)
+                }
+                // Keep what we had when a call fails (timeout, 429, offline) instead of blanking it.
+                quiet { api.sync(secure.refreshToken).data?.transactions }?.let { transactions = it }
+                quiet { api.statements(secure.refreshToken, pwHeader()).accounts }?.let { stmtAccounts = it.filter { a -> a.error == null } }
+            }
             if (holdings.isNotEmpty()) {
                 val quotes = holdings.map { it.symbol }.distinct().associateWith { sym -> quiet { api.quote(sym) } }
                 // Merge into the current list (it may have changed while quotes loaded), not a snapshot.
@@ -164,6 +197,7 @@ object Repo {
     suspend fun upload(pdfBase64: String, password: String?) {
         loading = true; error = null
         try {
+            if (localMode) ensureGuestToken(Net.api(secure))
             val resp = Net.api(secure).upload(UploadReq(pdfBase64, password))
             if (resp.ok && !resp.accounts.isNullOrEmpty()) {
                 // Re-uploading the same statement replaces it instead of double-counting.
@@ -275,8 +309,9 @@ object Repo {
             .map { it.key to it.value.sumOf { s -> s.amountMain } }.sortedByDescending { it.second }
 
     /** First name for the greeting, and the avatar initial (web: "Good evening, Marcel"). */
-    val firstName: String? get() = profile?.name?.trim()?.split(" ")?.firstOrNull()?.takeIf { it.isNotBlank() }
-        ?: profile?.email?.substringBefore("@")?.takeIf { it.isNotBlank() }
+    val firstName: String? get() = displayName?.trim()?.split(" ")?.firstOrNull()?.takeIf { it.isNotBlank() }
+        ?: profile?.name?.trim()?.split(" ")?.firstOrNull()?.takeIf { it.isNotBlank() }
+        ?: profile?.email?.substringBefore("@")?.takeIf { it.isNotBlank() && it != "guest" }
     val initial: String get() = firstName?.take(1)?.uppercase() ?: "C"
 
     fun recurring(): List<Pair<String, Double>> =
@@ -331,6 +366,7 @@ object Repo {
         budget = Budget(); goals = emptyList()
         mainCcy = "IDR"; lang = "en"; hideAmounts = false
         fx = emptyMap(); fxBase = ""
+        localMode = false; displayName = null
         store.theme = theme // a display preference, not personal data: keep it across sign-out
     }
 }

@@ -27,11 +27,13 @@ class PreviewActivity : ComponentActivity() {
         Repo.init(this)
         seed()
         val screen = intent.getStringExtra("screen") ?: "overview"
+        // --ez local true: show the app in local mode (no Google account) with a chosen name.
+        if (intent.getBooleanExtra("local", false)) { Repo.localMode = true; Repo.displayName = "Marcel"; Repo.profile = null }
         setContent {
             CruminaTheme {
                 when (screen) {
-                    "login" -> LoginScreen(expired = false) {}
-                    "expired" -> LoginScreen(expired = true) {}
+                    "login" -> LoginScreen(expired = false, onLogin = {})
+                    "expired" -> LoginScreen(expired = true, onLogin = {})
                     else -> AppScaffold(onLogout = {}, startTab = Tab.values().firstOrNull { it.key == screen } ?: Tab.Overview, autoRefresh = false)
                 }
             }

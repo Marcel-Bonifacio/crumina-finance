@@ -26,6 +26,17 @@ class Store(context: Context) {
         get() = prefs.getString("lang", "en") ?: "en"
         set(v) { prefs.edit().putString("lang", v).apply() }
 
+    /** Local mode: no Google account; data lives only on this phone. */
+    var localMode: Boolean
+        get() = prefs.getBoolean("local", false)
+        set(v) { prefs.edit().putBoolean("local", v).apply() }
+    /** Name the user chose for greetings (overrides the Google first name). */
+    var displayName: String?
+        get() = prefs.getString("dname", null)
+        set(v) { prefs.edit().apply { if (v.isNullOrBlank()) remove("dname") else putString("dname", v) }.apply() }
+    var guestAt: Long
+        get() = prefs.getLong("guest_at", 0L)
+        set(v) { prefs.edit().putLong("guest_at", v).apply() }
     var theme: String
         get() = prefs.getString("theme", "light") ?: "light"
         set(v) { prefs.edit().putString("theme", v).apply() }

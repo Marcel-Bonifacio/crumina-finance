@@ -35,7 +35,8 @@ class MainActivity : ComponentActivity() {
                 if (loggedIn.value && !Repo.sessionExpired) {
                     AppScaffold(onLogout = { Repo.logout(); loggedIn.value = false })
                 } else {
-                    LoginScreen(expired = Repo.sessionExpired) { AuthManager.login(this) }
+                    LoginScreen(expired = Repo.sessionExpired, onLogin = { AuthManager.login(this) },
+                        onLocal = { name -> Repo.startLocal(name); loggedIn.value = true })
                 }
             }
         }

@@ -93,7 +93,7 @@ fun OverviewScreen(onSync: () -> Unit, go: (Tab) -> Unit) {
     GoalsCard()
     Spacer(Modifier.height(4.dp))
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        GhostButton(if (r.loading) r.t("syncing") else r.t("sync"), onSync, enabled = !r.loading)
+        if (!r.localMode) GhostButton(if (r.loading) r.t("syncing") else r.t("sync"), onSync, enabled = !r.loading)
     }
 
     if (addExpense) AddExpenseDialog(onDismiss = { addExpense = false })
