@@ -156,9 +156,7 @@ Licences are taken from the `license` field that each package declares in
 
 | Font | Licence | Copyright | Where it comes from |
 |---|---|---|---|
-| Plus Jakarta Sans | SIL Open Font License 1.1 | Copyright 2020 The Plus Jakarta Sans Project Authors (https://github.com/tokotype/PlusJakartaSans) | Loaded at runtime from Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`) by the web pages. The font files are not in this repository. If you serve them yourself, include the font's `OFL.txt`. |
-
-The Android app uses the device's system font.
+| Plus Jakarta Sans | SIL Open Font License 1.1 | Copyright 2020 The Plus Jakarta Sans Project Authors (https://github.com/tokotype/PlusJakartaSans) | Web pages load it at runtime from Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`). The Android app bundles the unmodified variable font from [google/fonts](https://github.com/google/fonts/tree/main/ofl/plusjakartasans) as `android/app/src/main/res/font/plus_jakarta_sans.ttf`, and ships its licence in the APK as `assets/licenses/PlusJakartaSans-OFL.txt`. |
 
 ## 5. External services and data
 

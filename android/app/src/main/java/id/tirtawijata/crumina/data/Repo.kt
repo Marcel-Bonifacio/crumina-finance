@@ -204,7 +204,8 @@ object Repo {
     // ---- insights / budgets ----
     val budgetCategories = listOf("Food & Dining", "Groceries", "Transport", "Shopping", "Travel", "Bills & Subs")
 
-    private fun daysAgo(date: String?): Long {
+    /** Days since [date] (ISO, dd/MM/yyyy or MM/dd/yyyy); Long.MAX_VALUE when it cannot be read. */
+    fun daysAgo(date: String?): Long {
         val d = date?.trim()?.take(10) ?: return Long.MAX_VALUE
         val parsed = runCatching { java.time.LocalDate.parse(d) }.getOrNull()
             ?: runCatching { java.time.LocalDate.parse(d, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) }.getOrNull()
@@ -231,6 +232,14 @@ object Repo {
     val daily30: Double get() = spent30 / 30.0
     val biggest30: Double get() = spendWithin(30).maxOfOrNull { it.amountMain } ?: 0.0
     val count30: Int get() = spendWithin(30).size
+    fun topMerchants(days: Long): List<Pair<String, Double>> =
+        spendWithin(days).filter { !it.merchant.isNullOrBlank() }.groupBy { it.merchant!!.trim() }
+            .map { it.key to it.value.sumOf { s -> s.amountMain } }.sortedByDescending { it.second }
+
+    /** First name for the greeting, and the avatar initial (web: "Good evening, Marcel"). */
+    val firstName: String? get() = profile?.name?.trim()?.split(" ")?.firstOrNull()?.takeIf { it.isNotBlank() }
+        ?: profile?.email?.substringBefore("@")?.takeIf { it.isNotBlank() }
+    val initial: String get() = firstName?.take(1)?.uppercase() ?: "C"
 
     fun recurring(): List<Pair<String, Double>> =
         spendWithin(120).filter { !it.merchant.isNullOrBlank() }

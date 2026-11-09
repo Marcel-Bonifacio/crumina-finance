@@ -14,11 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,27 +27,40 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
+import java.util.Locale
 import androidx.compose.ui.unit.dp
 import id.tirtawijata.crumina.data.Budget
 import id.tirtawijata.crumina.data.Repo
 
-private val Muted = Color(0xFF7A8AA0)
-private val Red = Color(0xFFE0476A)
-private val Green = Color(0xFF0FA98E)
-
 @Composable
 fun InsightsSection() {
     val r = Repo
-    Text(r.t("insights"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-    Spacer(Modifier.height(8.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        StatCard(r.t("spent_30"), r.money(r.spent30))
-        StatCard(r.t("daily_avg"), r.money(r.daily30))
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        StatTile(r.t("spent_30"), r.money(-r.spent30))
+        StatTile(r.t("daily_avg"), r.money(r.daily30))
     }
-    Spacer(Modifier.height(12.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        StatCard(r.t("biggest"), r.money(r.biggest30))
-        StatCard(r.t("transactions"), r.count30.toString())
+    Spacer(Modifier.height(10.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        StatTile(r.t("biggest"), r.money(r.biggest30))
+        StatTile(r.t("transactions"), r.count30.toString())
+    }
+    val top = r.topMerchants(30).take(3)
+    if (top.isNotEmpty()) {
+        Spacer(Modifier.height(14.dp))
+        Muted(r.t("top_spending"), 12.sp)
+        val max = top.maxOf { it.second }.coerceAtLeast(1.0)
+        top.forEach { (m, amt) ->
+            Spacer(Modifier.height(10.dp))
+            Row(Modifier.fillMaxWidth()) {
+                Ink(m, 14.sp, FontWeight.SemiBold, Modifier.weight(1f))
+                Ink(r.money(amt), 14.sp)
+            }
+            Spacer(Modifier.height(6.dp))
+            BarBrush((amt / max).toFloat(), Brush.horizontalGradient(listOf(Color(0xFF16C7A8), Color(0xFF16336E))))
+        }
     }
 }
 
@@ -59,65 +68,52 @@ fun InsightsSection() {
 fun WhereItGoes() {
     val r = Repo
     val cats = r.categoryTotals(30).take(6)
-    Text(r.t("where_goes"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-    Spacer(Modifier.height(8.dp))
-    if (cats.isEmpty()) {
-        Text(r.t("no_tx"), color = Muted)
-    } else {
-        val max = cats.maxOf { it.second }.coerceAtLeast(1.0)
-        cats.forEach { (cat, amt) ->
-            Column(Modifier.padding(vertical = 6.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(cat, style = MaterialTheme.typography.bodyMedium)
-                    Text(r.money(amt), style = MaterialTheme.typography.bodyMedium)
-                }
-                Spacer(Modifier.height(4.dp))
-                LinearProgressIndicator(
-                    progress = (amt / max).toFloat().coerceIn(0f, 1f),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+    if (cats.isEmpty()) { EmptyText(r.t("no_tx")); return }
+    val total = cats.sumOf { it.second }.coerceAtLeast(1.0)
+    cats.forEachIndexed { i, (cat, amt) ->
+        if (i > 0) Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth()) {
+            Ink(cat, 14.sp, modifier = Modifier.weight(1f))
+            Muted(String.format(Locale.US, "%.0f%%", amt / total * 100) + " · " + r.money(amt), 13.sp)
         }
+        Spacer(Modifier.height(6.dp))
+        Bar((amt / total).toFloat(), catColor(cat))
     }
 }
 
 @Composable
-fun BudgetsSection() {
+fun BudgetsCard() {
     val r = Repo
     var showSet by remember { mutableStateOf(false) }
     val days = if (r.budget.period == "weekly") 7L else 30L
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text(r.t("budgets"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        TextButton(onClick = { showSet = true }) { Text(r.t("set_budgets")) }
-    }
-    val hasBudget = r.budget.overall > 0.0 || r.budget.cats.values.any { it > 0.0 }
-    if (!hasBudget) {
-        Text(r.t("no_budgets"), color = Muted)
-    } else {
-        if (r.budget.overall > 0.0) BudgetBar(r.t("overall"), r.spentWindow(days), r.budget.overall)
-        r.budget.cats.forEach { (cat, lim) -> if (lim > 0.0) BudgetBar(cat, r.spentInCategory(cat, days), lim) }
+    CrCard(title = r.t("budgets"), action = r.t("set_budgets"), onAction = { showSet = true }) {
+        val hasBudget = r.budget.overall > 0.0 || r.budget.cats.values.any { it > 0.0 }
+        if (!hasBudget) EmptyText(r.t("no_budgets")) else {
+            var first = true
+            if (r.budget.overall > 0.0) { BudgetBar(r.t("overall"), r.spentWindow(days), r.budget.overall, first); first = false }
+            r.budget.cats.forEach { (cat, lim) -> if (lim > 0.0) { BudgetBar(cat, r.spentInCategory(cat, days), lim, first); first = false } }
+        }
     }
     if (showSet) BudgetDialog(onDismiss = { showSet = false })
 }
 
 @Composable
-private fun BudgetBar(label: String, spent: Double, limit: Double) {
+private fun BudgetBar(label: String, spent: Double, limit: Double, first: Boolean) {
     val r = Repo
-    val frac = (spent / limit).toFloat().coerceIn(0f, 1f)
+    val cr = LocalCr.current
     val over = spent > limit
-    Column(Modifier.padding(vertical = 6.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, style = MaterialTheme.typography.bodyMedium)
-            Text(r.money(spent) + " / " + r.money(limit), style = MaterialTheme.typography.bodySmall, color = Muted)
-        }
-        Spacer(Modifier.height(4.dp))
-        LinearProgressIndicator(progress = frac, modifier = Modifier.fillMaxWidth(), color = if (over) Red else Green)
-        Text(
-            if (over) r.t("over") + " " + r.money(spent - limit) else r.money(limit - spent) + " " + r.t("left"),
-            style = MaterialTheme.typography.bodySmall,
-            color = if (over) Red else Muted
-        )
+    if (!first) Spacer(Modifier.height(14.dp))
+    Row(Modifier.fillMaxWidth()) {
+        Ink(label, 14.sp, FontWeight.SemiBold, Modifier.weight(1f))
+        Muted(r.money(spent) + " / " + r.money(limit), 12.sp)
     }
+    Spacer(Modifier.height(6.dp))
+    Bar((spent / limit).toFloat(), if (over) cr.red else cr.green)
+    Spacer(Modifier.height(4.dp))
+    Ink(
+        if (over) r.t("over") + " " + r.money(spent - limit) else r.money(limit - spent) + " " + r.t("left"),
+        12.sp, color = if (over) cr.red else cr.muted
+    )
 }
 
 @Composable
@@ -133,7 +129,7 @@ private fun BudgetDialog(onDismiss: () -> Unit) {
             }
         }
     }
-    AlertDialog(
+    CrDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
@@ -149,12 +145,12 @@ private fun BudgetDialog(onDismiss: () -> Unit) {
                 Text(r.t("period"), style = MaterialTheme.typography.titleSmall)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = period == "monthly", onClick = { period = "monthly" }, label = { Text(r.t("monthly")) })
-                    FilterChip(selected = period == "weekly", onClick = { period = "weekly" }, label = { Text(r.t("weekly")) })
+                    Chip(r.t("monthly"), period == "monthly") { period = "monthly" }
+                    Chip(r.t("weekly"), period == "weekly") { period = "weekly" }
                 }
-                OutlinedTextField(value = overall, onValueChange = { overall = it }, label = { Text(r.t("overall")) }, singleLine = true)
+                CrField(value = overall, onValueChange = { overall = it }, label = { Text(r.t("overall")) }, singleLine = true)
                 r.budgetCategories.forEach { c ->
-                    OutlinedTextField(value = catInputs[c] ?: "", onValueChange = { catInputs[c] = it }, label = { Text(c) }, singleLine = true)
+                    CrField(value = catInputs[c] ?: "", onValueChange = { catInputs[c] = it }, label = { Text(c) }, singleLine = true)
                 }
             }
         }
@@ -165,17 +161,10 @@ private fun BudgetDialog(onDismiss: () -> Unit) {
 fun RecurringSection() {
     val r = Repo
     val rec = r.recurring().take(8)
-    Text(r.t("recurring"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-    Spacer(Modifier.height(8.dp))
-    if (rec.isEmpty()) {
-        Text(r.t("no_recurring"), color = Muted)
-    } else {
-        rec.forEach { (merchant, amt) ->
-            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(merchant, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                Spacer(Modifier.height(0.dp))
-                Text(r.money(amt), style = MaterialTheme.typography.bodyMedium)
-            }
+    if (rec.isEmpty()) { EmptyText(r.t("no_recurring")); return }
+    rec.forEachIndexed { i, (merchant, amt) ->
+        ListRow(i == 0, { IconTile(merchant.take(1).uppercase(), NeutralGrad) }, merchant, null) {
+            Ink(r.money(amt), 14.sp, FontWeight.Bold)
         }
     }
 }
@@ -183,44 +172,31 @@ fun RecurringSection() {
 @Composable
 fun CarbonSection() {
     val r = Repo
-    Text(r.t("carbon"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-    Spacer(Modifier.height(8.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        StatCard(r.t("co2_month"), String.format(java.util.Locale.US, "%,.0f kg", r.carbonMonthlyKg))
-        StatCard(r.t("trees_year"), String.format(java.util.Locale.US, "%.1f", r.carbonTreesYear))
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        StatTile(r.t("co2_month"), String.format(Locale.US, "%,.0f kg", r.carbonMonthlyKg))
+        StatTile(r.t("trees_year"), String.format(Locale.US, "%.1f", r.carbonTreesYear))
     }
-    Spacer(Modifier.height(8.dp))
-    Text(
-        r.t("driving") + ": " + String.format(java.util.Locale.US, "%,.0f", r.carbonDrivingKm) + " " + r.t("km"),
-        style = MaterialTheme.typography.bodySmall, color = Muted
-    )
+    Spacer(Modifier.height(10.dp))
+    Muted(r.t("driving") + ": " + String.format(Locale.US, "%,.0f", r.carbonDrivingKm) + " " + r.t("km"), 12.sp)
 }
 
 @Composable
-fun GoalsSection() {
+fun GoalsCard() {
     val r = Repo
+    val cr = LocalCr.current
     var dialog by remember { mutableStateOf<Int?>(null) }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text(r.t("goals"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        TextButton(onClick = { dialog = -1 }) { Text(r.t("add_goal")) }
-    }
-    if (r.goals.isEmpty()) {
-        Text(r.t("no_goals"), color = Muted)
-    } else {
+    CrCard(title = r.t("goals"), action = "+ " + r.t("add_goal"), onAction = { dialog = -1 }) {
+        if (r.goals.isEmpty()) EmptyText(r.t("no_goals"))
         r.goals.forEachIndexed { i, g ->
-            val frac = if (g.target > 0.0) (g.saved / g.target).toFloat().coerceIn(0f, 1f) else 0f
-            Column(
-                Modifier.fillMaxWidth().clickable { dialog = i }.padding(vertical = 6.dp)
-            ) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(g.name, style = MaterialTheme.typography.bodyMedium)
-                    Text(r.money(g.saved) + " / " + r.money(g.target), style = MaterialTheme.typography.bodySmall, color = Muted)
+            val frac = if (g.target > 0.0) (g.saved / g.target).toFloat() else 0f
+            Column(Modifier.fillMaxWidth().clickable { dialog = i }.padding(vertical = 8.dp)) {
+                Row(Modifier.fillMaxWidth()) {
+                    Ink(g.name, 14.sp, FontWeight.SemiBold, Modifier.weight(1f))
+                    Muted(r.money(g.saved) + " / " + r.money(g.target), 12.sp)
                 }
-                Spacer(Modifier.height(4.dp))
-                LinearProgressIndicator(progress = frac, modifier = Modifier.fillMaxWidth())
-                if (g.target > 0.0 && g.saved >= g.target) {
-                    Text(r.t("reached"), style = MaterialTheme.typography.bodySmall, color = Green)
-                }
+                Spacer(Modifier.height(6.dp))
+                Bar(frac, cr.teal)
+                if (g.target > 0.0 && g.saved >= g.target) Ink(r.t("reached"), 12.sp, color = cr.green, modifier = Modifier.padding(top = 4.dp))
             }
         }
     }
@@ -234,7 +210,7 @@ private fun GoalDialog(index: Int, onDismiss: () -> Unit) {
     var name by remember { mutableStateOf(existing?.name ?: "") }
     var target by remember { mutableStateOf(existing?.target?.let { if (it > 0.0) it.toLong().toString() else "" } ?: "") }
     var saved by remember { mutableStateOf(existing?.saved?.let { if (it > 0.0) it.toLong().toString() else "" } ?: "") }
-    AlertDialog(
+    CrDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
@@ -255,9 +231,9 @@ private fun GoalDialog(index: Int, onDismiss: () -> Unit) {
         title = { Text(r.t("add_goal")) },
         text = {
             Column {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(r.t("goal_name")) }, singleLine = true)
-                OutlinedTextField(value = target, onValueChange = { target = it }, label = { Text(r.t("target")) }, singleLine = true)
-                OutlinedTextField(value = saved, onValueChange = { saved = it }, label = { Text(r.t("saved")) }, singleLine = true)
+                CrField(value = name, onValueChange = { name = it }, label = { Text(r.t("goal_name")) }, singleLine = true)
+                CrField(value = target, onValueChange = { target = it }, label = { Text(r.t("target")) }, singleLine = true)
+                CrField(value = saved, onValueChange = { saved = it }, label = { Text(r.t("saved")) }, singleLine = true)
             }
         }
     )
@@ -266,19 +242,24 @@ private fun GoalDialog(index: Int, onDismiss: () -> Unit) {
 @Composable
 fun TrendSection() {
     val r = Repo
+    val cr = LocalCr.current
     val data = r.monthlyTrend()
     val max = (data.maxOfOrNull { it.second } ?: 0.0).coerceAtLeast(1.0)
-    Text(r.t("trend"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-    Spacer(Modifier.height(8.dp))
-    Row(Modifier.fillMaxWidth().height(140.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        data.forEach { (ym, amt) ->
-            val frac = (amt / max).toFloat().coerceIn(0.02f, 1f)
+    Row(Modifier.fillMaxWidth().height(150.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        data.forEachIndexed { i, (ym, amt) ->
+            val frac = (amt / max).toFloat().coerceIn(0.03f, 1f)
             Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.Bottom, horizontalAlignment = Alignment.CenterHorizontally) {
                 Spacer(Modifier.weight((1f - frac).coerceAtLeast(0.001f)))
-                Box(Modifier.weight(frac).fillMaxWidth(0.6f).background(Green, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)))
-                Spacer(Modifier.height(4.dp))
-                Text(ym.substring(5), style = MaterialTheme.typography.bodySmall, color = Muted)
+                Box(
+                    Modifier.weight(frac).fillMaxWidth(0.7f).clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 3.dp, bottomEnd = 3.dp))
+                        .background(if (i == data.lastIndex) Brush.verticalGradient(listOf(Color(0xFF16C7A8), Color(0xFF13B97A))) else Brush.verticalGradient(listOf(Color(0xFF2D5BD0), Color(0xFF16336E))))
+                )
+                Spacer(Modifier.height(6.dp))
+                Muted(monthLabel(ym), 11.sp)
             }
         }
     }
 }
+
+private fun monthLabel(ym: String): String =
+    runCatching { java.time.YearMonth.parse(ym).month.getDisplayName(java.time.format.TextStyle.SHORT, uiLocale()) }.getOrNull() ?: ym.takeLast(2)

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: a screen-preview activity with sample data, for screenshots. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name=".PreviewActivity"
+            android:exported="true"
+            android:process=":preview"
+            android:theme="@style/Theme.Crumina" />
+    </application>
+</manifest>

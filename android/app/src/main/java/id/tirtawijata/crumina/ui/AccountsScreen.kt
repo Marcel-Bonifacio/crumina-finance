@@ -14,12 +14,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import id.tirtawijata.crumina.data.Account
 import id.tirtawijata.crumina.data.Repo
@@ -43,6 +41,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun AccountsScreen() {
     val r = Repo
+    val cr = LocalCr.current
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var showAdd by remember { mutableStateOf(false) }
@@ -55,55 +54,48 @@ fun AccountsScreen() {
             if (b64 != null) r.upload(b64, null)
         }
     }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(r.t("accounts"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            TextButton(onClick = { showAdd = true }) { Text("+ " + r.t("add_account")) }
-        }
-        Spacer(Modifier.height(8.dp))
-        if (r.accounts.isEmpty() && r.allStmt.isEmpty()) {
-            Text(r.t("no_accounts"), color = Color(0xFF7A8AA0))
-        }
+    val stmt = r.allStmt
+    val count = r.accounts.size + stmt.size
+    PageHeader(r.t("accounts"), String.format(r.t("accounts_n"), count))
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 16.dp)) {
+        GhostButton(if (r.loading) r.t("uploading") else r.t("upload_pdf"), { pdfPicker.launch("application/pdf") }, enabled = !r.loading)
+        PillButton(r.t("q_account"), { showAdd = true })
+    }
+    r.error?.let { Muted(it, 12.sp, Modifier.padding(bottom = 12.dp)) }
+    CrCard {
+        if (count == 0) EmptyText(r.t("no_accounts"))
         r.accounts.forEachIndexed { i, a ->
-            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(a.name, style = MaterialTheme.typography.bodyLarge)
-                    Text(a.type + " · " + a.ccy, style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A8AA0))
-                }
-                Text(r.money(a.bal, a.ccy))
-                IconButton(onClick = { r.removeAccount(i) }) { Icon(Icons.Filled.Delete, contentDescription = r.t("remove")) }
+            ListRow(i == 0, { IconTile(a.name.take(1).uppercase(), accountGrad(a.type)) }, a.name, typeLabel(a.type) + " · " + a.ccy) {
+                Ink(r.money(a.bal, a.ccy, false), 14.sp, FontWeight.Bold)
+                RemoveX { r.removeAccount(i) }
             }
         }
-        val stmt = r.allStmt
-        if (stmt.isNotEmpty()) {
-            Spacer(Modifier.height(12.dp))
-            Text(r.t("from_statements"), style = MaterialTheme.typography.titleMedium)
-            stmt.forEach { s ->
-                Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(Modifier.weight(1f)) {
-                        Text(s.name ?: "Account", style = MaterialTheme.typography.bodyLarge)
-                        Text(listOfNotNull(s.type, s.institution).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A8AA0))
-                    }
-                    Text(r.money(s.balance ?: 0.0, s.ccy ?: "IDR"))
-                }
+        stmt.forEachIndexed { i, s ->
+            val name = s.name ?: s.institution ?: "Account"
+            ListRow(r.accounts.isEmpty() && i == 0, { IconTile((s.institution ?: name).take(1).uppercase(), accountGrad(s.type)) },
+                name, listOfNotNull(typeLabel(s.type), s.institution).joinToString(" · ")) {
+                Ink(r.money(s.balance ?: 0.0, s.ccy ?: "IDR"), 14.sp, FontWeight.Bold, color = if ((s.balance ?: 0.0) < 0) cr.red else null)
             }
-        }
-        Spacer(Modifier.height(16.dp))
-        OutlinedButton(onClick = { pdfPicker.launch("application/pdf") }, enabled = !r.loading) {
-            Text(if (r.loading) r.t("uploading") else r.t("upload_statement"))
         }
     }
     if (showAdd) AddAccountDialog(onDismiss = { showAdd = false }, onSave = { r.addAccount(it); showAdd = false })
 }
 
+private fun typeLabel(t: String?): String = when (t) {
+    null, "" -> "Account"
+    "credit_card" -> "Credit card"
+    "ewallet" -> "E-wallet"
+    else -> t.replaceFirstChar { it.uppercase() }
+}
+
 @Composable
-private fun AddAccountDialog(onDismiss: () -> Unit, onSave: (Account) -> Unit) {
+fun AddAccountDialog(onDismiss: () -> Unit, onSave: (Account) -> Unit) {
     val r = Repo
     var name by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("cash") }
     var ccy by remember { mutableStateOf(r.mainCcy) }
     var bal by remember { mutableStateOf("") }
-    AlertDialog(
+    CrDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
@@ -115,10 +107,10 @@ private fun AddAccountDialog(onDismiss: () -> Unit, onSave: (Account) -> Unit) {
         title = { Text(r.t("add_account")) },
         text = {
             Column {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(r.t("name")) }, singleLine = true)
-                OutlinedTextField(value = type, onValueChange = { type = it }, label = { Text(r.t("type")) }, singleLine = true)
-                OutlinedTextField(value = ccy, onValueChange = { ccy = it }, label = { Text(r.t("currency")) }, singleLine = true)
-                OutlinedTextField(value = bal, onValueChange = { bal = it }, label = { Text(r.t("balance")) }, singleLine = true)
+                CrField(value = name, onValueChange = { name = it }, label = { Text(r.t("name")) }, singleLine = true)
+                CrField(value = type, onValueChange = { type = it }, label = { Text(r.t("type")) }, singleLine = true)
+                CrField(value = ccy, onValueChange = { ccy = it }, label = { Text(r.t("currency")) }, singleLine = true)
+                CrField(value = bal, onValueChange = { bal = it }, label = { Text(r.t("balance")) }, singleLine = true)
             }
         }
     )

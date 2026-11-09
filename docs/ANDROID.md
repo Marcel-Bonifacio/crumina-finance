@@ -296,3 +296,17 @@ existing `app/` (same code as the web deploy) with these set:
   adb shell pm verify-app-links --re-verify id.tirtawijata.crumina
   adb shell pm get-app-links id.tirtawijata.crumina   # crumina.tirtawijata.com: verified
   ```
+
+## Previewing screens (debug builds only)
+
+Debug builds include `PreviewActivity` (in `app/src/debug`), which fills the app with sample
+data and shows one screen without signing in or calling the API. It is not part of release
+builds. Use it to check the UI on an emulator:
+
+```bash
+adb shell am start -n id.tirtawijata.crumina/.PreviewActivity --es screen overview
+```
+
+`screen` is one of `login`, `expired`, `overview`, `accounts`, `portfolio`, `activity`,
+`settings`. Switch themes with `adb shell cmd uimode night yes|no`. Unlike `MainActivity`,
+it does not set `FLAG_SECURE`, so screenshots work.

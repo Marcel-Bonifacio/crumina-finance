@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- brand/crumina-icon.svg: rounded navy tile with the white "C" arc and teal dot. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <path android:pathData="M132,16 h248 a116,116 0 0,1 116,116 v248 a116,116 0 0,1 -116,116 h-248 a116,116 0 0,1 -116,-116 v-248 a116,116 0 0,1 116,-116z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="16" android:startY="16"
+                android:endX="496" android:endY="496"
+                android:startColor="#1B3D7A"
+                android:endColor="#0A1B3D" />
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M314.68,352.66 A118,118 0 1,1 314.85,159.46"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="48"
+        android:strokeLineCap="round" />
+    <path
+        android:fillColor="#2FE0C2"
+        android:pathData="M307,256 a50,50 0 1,0 100,0 a50,50 0 1,0 -100,0z" />
+</vector>

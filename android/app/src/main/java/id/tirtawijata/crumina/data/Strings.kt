@@ -2,6 +2,21 @@ package id.tirtawijata.crumina.data
 
 object Strings {
     private val en = mapOf(
+        "greet_m" to "Good morning", "greet_a" to "Good afternoon", "greet_e" to "Good evening",
+        "home_sub" to "Your whole financial picture", "expenses_30" to "Expenses · 30d",
+        "q_expense" to "+ Add expense", "q_account" to "+ Add account", "q_holdings" to "+ Add holdings",
+        "view_all" to "View all", "accounts_n" to "%d accounts", "holdings_n" to "%d holdings",
+        "act_sub" to "Synced card transactions", "search" to "Search merchant…", "upload_pdf" to "Upload PDF",
+        "pf_value" to "Portfolio value", "all_time" to "all-time", "sec_account" to "Account",
+        "sec_prefs" to "Preferences", "sec_data" to "Data", "main_ccy" to "Main currency",
+        "main_ccy_sub" to "All balances shown in this currency at live rates", "language_sub" to "Display language",
+        "hide_sub" to "Show •••• instead of amounts", "stmt_unlock_sub" to "Store statement passwords to read full balances",
+        "sync_sub" to "Fetch new statements and alerts", "google_acct" to "Signed in with Google",
+        "r7" to "7D", "r30" to "30D", "r90" to "90D", "r365" to "1Y", "rall" to "All",
+        "login_sub" to "Your money, all in one place. Sign in with Google to read your statements.",
+        "login_google" to "Sign in with Google",
+        "login_fine" to "Crumina requests read-only access to find your statement & alert emails. It never sends, deletes, or modifies your mail.",
+        "expired" to "Your session expired. Please sign in again.", "top_spending" to "Top spending", "show_more" to "Show more (%d)",
         "overview" to "Overview", "accounts" to "Accounts", "activity" to "Activity",
         "portfolio" to "Portfolio", "settings" to "Settings",
         "net_worth" to "Net worth", "cash" to "Cash & accounts", "investments" to "Investments",
@@ -32,6 +47,21 @@ object Strings {
         "uploading" to "Uploading\u2026", "scan_receipt" to "Scan receipt", "scanning" to "Scanning\u2026", "trend" to "Spending trend \u00b7 6mo"
     )
     private val id = mapOf(
+        "greet_m" to "Selamat pagi", "greet_a" to "Selamat siang", "greet_e" to "Selamat malam",
+        "home_sub" to "Gambaran keuangan Anda", "expenses_30" to "Pengeluaran · 30h",
+        "q_expense" to "+ Tambah transaksi", "q_account" to "+ Tambah rekening", "q_holdings" to "+ Tambah investasi",
+        "view_all" to "Lihat semua", "accounts_n" to "%d rekening", "holdings_n" to "%d investasi",
+        "act_sub" to "Transaksi kartu tersinkron", "search" to "Cari merchant…", "upload_pdf" to "Unggah PDF",
+        "pf_value" to "Nilai portofolio", "all_time" to "sepanjang waktu", "sec_account" to "Akun",
+        "sec_prefs" to "Preferensi", "sec_data" to "Data", "main_ccy" to "Mata uang utama",
+        "main_ccy_sub" to "Semua saldo dalam mata uang ini dengan kurs terkini", "language_sub" to "Bahasa tampilan",
+        "hide_sub" to "Tampilkan •••• sebagai ganti nominal", "stmt_unlock_sub" to "Simpan kata sandi rekening koran untuk membaca saldo penuh",
+        "sync_sub" to "Ambil rekening koran dan notifikasi baru", "google_acct" to "Masuk dengan Google",
+        "r7" to "7H", "r30" to "30H", "r90" to "90H", "r365" to "1T", "rall" to "Semua",
+        "login_sub" to "Uang Anda, di satu tempat. Masuk dengan Google untuk membaca rekening koran Anda.",
+        "login_google" to "Masuk dengan Google",
+        "login_fine" to "Crumina meminta akses baca saja untuk menemukan email rekening koran & notifikasi. Crumina tidak pernah mengirim, menghapus, atau mengubah email Anda.",
+        "expired" to "Sesi Anda berakhir. Silakan masuk lagi.", "top_spending" to "Pengeluaran teratas", "show_more" to "Tampilkan lagi (%d)",
         "overview" to "Ringkasan", "accounts" to "Rekening", "activity" to "Aktivitas",
         "portfolio" to "Portofolio", "settings" to "Pengaturan",
         "net_worth" to "Kekayaan bersih", "cash" to "Kas & rekening", "investments" to "Investasi",
