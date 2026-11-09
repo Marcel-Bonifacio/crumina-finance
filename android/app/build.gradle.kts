@@ -13,8 +13,8 @@ android {
         applicationId = "id.tirtawijata.crumina"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.1.1"
+        versionCode = 3
+        versionName = "0.2.0"
         buildConfigField("String", "API_BASE", "\"https://crumina.tirtawijata.com\"")
     }
 
