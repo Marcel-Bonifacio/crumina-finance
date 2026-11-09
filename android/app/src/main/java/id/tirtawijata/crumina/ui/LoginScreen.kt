@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -103,6 +104,8 @@ fun LoginScreen(expired: Boolean, onLogin: () -> Unit, onLocal: (String?) -> Uni
     }
     if (askName) {
         var name by remember { mutableStateOf("") }
+        val focus = remember { androidx.compose.ui.focus.FocusRequester() }
+        androidx.compose.runtime.LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
         CrDialog(
             onDismissRequest = { askName = false },
             title = { Text(r.t("local_title")) },
@@ -110,7 +113,7 @@ fun LoginScreen(expired: Boolean, onLogin: () -> Unit, onLocal: (String?) -> Uni
                 Column {
                     Muted(r.t("local_body"), 13.sp)
                     Spacer(Modifier.height(10.dp))
-                    CrField(name, { name = it.take(40) }, label = { Text(r.t("your_name")) })
+                    CrField(name, { name = it.take(40) }, Modifier.focusRequester(focus), label = { Text(r.t("your_name")) })
                 }
             },
             confirmButton = { TextButton(onClick = { askName = false; onLocal(name) }) { Text(r.t("start")) } },

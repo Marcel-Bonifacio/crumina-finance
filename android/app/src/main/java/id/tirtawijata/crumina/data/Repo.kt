@@ -79,6 +79,8 @@ object Repo {
 
     /** Start local mode with an optional name. A guest token for the public API is fetched on refresh. */
     fun startLocal(name: String?) {
+        // Data left by an expired Google session belongs to that account, not to whoever starts local mode.
+        if (profile?.email != null) logout()
         localMode = true; store.localMode = true
         chooseDisplayName(name)
         sessionExpired = false
@@ -91,7 +93,11 @@ object Repo {
 
     /** Local mode uses the server's guest session (30 days) for quotes and PDF upload; renew it before it lapses. */
     private suspend fun ensureGuestToken(api: Api) {
-        if (secure.session != null && System.currentTimeMillis() - store.guestAt < 25L * 864e5.toLong()) return
+        val fresh = secure.session != null && System.currentTimeMillis() - store.guestAt < 25L * 864e5.toLong()
+        // A fresh-looking token can still be refused (e.g. the server's secret was rotated): check it.
+        val refused = fresh && try { api.data(); false } catch (e: retrofit2.HttpException) { e.code() == 401 }
+            catch (e: kotlin.coroutines.cancellation.CancellationException) { throw e } catch (e: Exception) { false }
+        if (fresh && !refused) return
         quiet { api.guestToken().token }?.let { secure.session = it; store.guestAt = System.currentTimeMillis() }
     }
 
