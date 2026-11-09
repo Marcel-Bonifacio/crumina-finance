@@ -111,8 +111,12 @@ jobs:
           Licence: $SRC/blob/$TAG/LICENSE
           The APK also contains third-party libraries under their own licences, including the proprietary Google ML Kit. See $SRC/blob/$TAG/THIRD_PARTY_NOTICES.md"
           cp apk/release/app-release.apk "$RUNNER_TEMP/crumina-$TAG.apk"
-          gh release create "$TAG" "$RUNNER_TEMP/crumina-$TAG.apk" \
+          # Same file under a fixed name, so the README can link releases/latest/download/crumina.apk.
+          cp apk/release/app-release.apk "$RUNNER_TEMP/crumina.apk"
+          # Only tags with a suffix (v1.2.3-beta.1) are pre-releases; GitHub's "latest" skips those.
+          PRE=(); [[ "$TAG" == *-* ]] && PRE=(--prerelease)
+          gh release create "$TAG" "$RUNNER_TEMP/crumina-$TAG.apk" "$RUNNER_TEMP/crumina.apk" \
             --repo "$GITHUB_REPOSITORY" \
             --title "Crumina $TAG (Android)" \
             --notes "$NOTES" \
-            --prerelease
+            "${PRE[@]}"
