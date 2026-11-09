@@ -7,6 +7,10 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
+import id.tirtawijata.crumina.auth.GoogleSignIn
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateOf
 import id.tirtawijata.crumina.auth.AuthManager
 import id.tirtawijata.crumina.data.Repo
@@ -35,7 +39,7 @@ class MainActivity : ComponentActivity() {
                 if (loggedIn.value && !Repo.sessionExpired) {
                     AppScaffold(onLogout = { Repo.logout(); loggedIn.value = false })
                 } else {
-                    LoginScreen(expired = Repo.sessionExpired, onLogin = { AuthManager.login(this) },
+                    LoginScreen(expired = Repo.sessionExpired, onLogin = { startGoogleSignIn() },
                         onLocal = { name -> Repo.startLocal(name); loggedIn.value = true })
                 }
             }
@@ -57,6 +61,26 @@ class MainActivity : ComponentActivity() {
         // Activity is relaunched, so clear it in place and keep it as the current intent.
         intent.setData(null)
         setIntent(intent)
+        applyTokens(tokens)
+    }
+
+    // Google's consent screen for the Gmail scope (launched by GoogleSignIn, result handed back to it).
+    private val consentLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { r ->
+        GoogleSignIn.onConsentResult(this, r.data)
+    }
+
+    /** Sign in with Google Identity Services; the browser flow is the fallback (no Play services, no account). */
+    fun startGoogleSignIn() {
+        if (GoogleSignIn.busy) return
+        lifecycleScope.launch {
+            try {
+                GoogleSignIn.signIn(this@MainActivity, consentLauncher)?.let { applyTokens(it) }
+            } catch (e: kotlin.coroutines.cancellation.CancellationException) { throw e
+            } catch (e: Exception) { AuthManager.login(this@MainActivity) }
+        }
+    }
+
+    private fun applyTokens(tokens: id.tirtawijata.crumina.auth.AuthTokens) {
         val profileJson = tokens.profile?.let { p ->
             runCatching { String(Base64.decode(p, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)) }.getOrNull()
         }

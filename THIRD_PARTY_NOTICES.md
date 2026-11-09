@@ -69,6 +69,9 @@ Dependencies declared in [`android/app/build.gradle.kts`](android/app/build.grad
 | com.google.code.gson:gson | 2.10.1 | Apache-2.0 |
 | org.jetbrains.kotlinx:kotlinx-coroutines-android | 1.8.1 | Apache-2.0 |
 | Kotlin standard library | 1.9.24 | Apache-2.0 |
+| androidx.credentials:credentials and credentials-play-services-auth | 1.3.0 | Apache-2.0 |
+| com.google.android.libraries.identity.googleid:googleid | 1.1.1 | **Proprietary.** Google Identity Services, under the [Google APIs Terms of Service](https://developers.google.com/terms). |
+| com.google.android.gms:play-services-auth | 21.2.0 | **Proprietary.** Google Play services, under the [Google APIs Terms of Service](https://developers.google.com/terms). |
 | com.google.mlkit:text-recognition | 16.0.1 | **Proprietary.** Google ML Kit, under the [ML Kit Terms of Service](https://developers.google.com/ml-kit/terms) and the [Google APIs Terms of Service](https://developers.google.com/terms). See section 7. |
 
 These libraries also pull in transitive dependencies, among them other AndroidX
@@ -168,6 +171,7 @@ provider's terms.
   [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy),
   including its Limited Use requirements.
 - **Google Fonts**: Google APIs Terms of Service (see section 4).
+- **Google Identity Services** (web `/login` loads `https://accounts.google.com/gsi/client`; the Android app uses Credential Manager and the Play services AuthorizationClient): [Google APIs Terms of Service](https://developers.google.com/terms).
 - **Google ML Kit** (Android app, on device): [ML Kit Terms of Service](https://developers.google.com/ml-kit/terms).
   Text recognition runs on the device, but ML Kit sends Google device and app
   information, a per-installation identifier, and performance and usage metrics. The

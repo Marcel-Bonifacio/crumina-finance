@@ -13,9 +13,12 @@ android {
         applicationId = "id.tirtawijata.crumina"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.5.0"
+        versionCode = 8
+        versionName = "0.6.0"
         buildConfigField("String", "API_BASE", "\"https://crumina.tirtawijata.com\"")
+        // The server's web OAuth client: Android sign-in asks Google for an ID token and a server auth
+        // code addressed to it (the Android OAuth client is matched by package name + signing SHA-1).
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"555174348956-lgr1r6ci6kvkdmb126flqtugbldql829.apps.googleusercontent.com\"")
     }
 
     signingConfigs {
@@ -75,6 +78,11 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.browser:browser:1.8.0")
+    // Google Identity Services: Credential Manager (Sign in with Google) + AuthorizationClient (Gmail scope).
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")

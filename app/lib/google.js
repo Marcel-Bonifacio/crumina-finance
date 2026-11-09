@@ -4,8 +4,10 @@ function authUrl(state){
   const p = new URLSearchParams({client_id:process.env.GOOGLE_CLIENT_ID,redirect_uri:process.env.GOOGLE_REDIRECT_URI,response_type:'code',scope:SCOPES.join(' '),access_type:'offline',prompt:'consent',state});
   return 'https://accounts.google.com/o/oauth2/v2/auth?'+p.toString();
 }
-async function exchangeCode(code){
-  const r=await fetch(tokenURL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({code,client_id:process.env.GOOGLE_CLIENT_ID,client_secret:process.env.GOOGLE_CLIENT_SECRET,redirect_uri:process.env.GOOGLE_REDIRECT_URI,grant_type:'authorization_code'})});
+// redirectUri: the registered callback for the redirect flow, 'postmessage' for a Google Identity Services
+// popup on the web, '' for a server auth code from the Android SDK.
+async function exchangeCode(code, redirectUri){
+  const r=await fetch(tokenURL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({code,client_id:process.env.GOOGLE_CLIENT_ID,client_secret:process.env.GOOGLE_CLIENT_SECRET,redirect_uri:redirectUri===undefined?process.env.GOOGLE_REDIRECT_URI:redirectUri,grant_type:'authorization_code'})});
   if(!r.ok) throw new Error('token '+r.status); return r.json();
 }
 async function refresh(rt){

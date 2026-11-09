@@ -14,6 +14,7 @@ import kotlin.math.abs
 object Repo {
     private lateinit var store: Store
     private lateinit var secure: SecureStore
+    internal fun secureStore(): SecureStore = secure
     private var ready = false
     // getParameterized, not an anonymous TypeToken subclass: R8 strips the generic
     // signature that the anonymous form relies on, which crashed release builds at startup.

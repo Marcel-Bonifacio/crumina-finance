@@ -85,7 +85,11 @@ fun LoginScreen(expired: Boolean, onLogin: () -> Unit, onLocal: (String?) -> Uni
             ) {
                 Image(painterResource(R.drawable.ic_google_g), contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(12.dp))
-                Text(r.t("login_google"), color = Color(0xFF1F1F1F), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(if (id.tirtawijata.crumina.auth.GoogleSignIn.busy) r.t("signing_in") else r.t("login_google"), color = Color(0xFF1F1F1F), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            }
+            id.tirtawijata.crumina.auth.GoogleSignIn.error?.let {
+                Spacer(Modifier.height(12.dp))
+                Text(it, color = Color(0xFFFFC9D4), fontSize = 13.sp, textAlign = TextAlign.Center)
             }
             // Divider and outlined "use locally" pill, as on app/login.html (.ordiv, .g2).
             Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {

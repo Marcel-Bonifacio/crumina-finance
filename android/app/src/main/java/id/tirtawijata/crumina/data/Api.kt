@@ -8,6 +8,7 @@ import retrofit2.http.Query
 
 interface Api {
     @GET("api/data") suspend fun data(): DataResponse
+    @POST("api/auth/callback") suspend fun authCode(@Body body: AuthCodeReq): AuthCodeResp
     @GET("api/guest") suspend fun guestToken(@Query("client") client: String = "android"): GuestResponse
     @GET("api/fx") suspend fun fx(@Query("base") base: String): FxResponse
     @GET("api/sync") suspend fun sync(@Header("X-Cr-Rt") rt: String?): SyncResponse
