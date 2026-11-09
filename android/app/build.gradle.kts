@@ -13,8 +13,8 @@ android {
         applicationId = "id.tirtawijata.crumina"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.6.0"
+        versionCode = 9
+        versionName = "0.6.1"
         // APK files are named after the version: crumina-0.6.0-release.apk, crumina-0.6.0-debug.apk.
         setProperty("archivesBaseName", "crumina-$versionName")
         buildConfigField("String", "API_BASE", "\"https://crumina.tirtawijata.com\"")
