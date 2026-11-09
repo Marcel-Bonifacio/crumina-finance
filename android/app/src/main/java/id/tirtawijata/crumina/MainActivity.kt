@@ -6,25 +6,13 @@ import android.util.Base64
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import id.tirtawijata.crumina.auth.AuthManager
 import id.tirtawijata.crumina.data.Repo
 import id.tirtawijata.crumina.ui.AppScaffold
 import id.tirtawijata.crumina.ui.CruminaTheme
+import id.tirtawijata.crumina.ui.LoginScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -32,6 +20,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Draw behind the status and navigation bars; screens pad themselves with window insets.
+        enableEdgeToEdge()
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         Repo.init(this)
         loggedIn.value = Repo.isLoggedIn
@@ -41,12 +31,10 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) handleIntent(intent)
         setContent {
             CruminaTheme {
-                Surface(Modifier.fillMaxSize()) {
-                    if (loggedIn.value && !Repo.sessionExpired) {
-                        AppScaffold(onLogout = { Repo.logout(); loggedIn.value = false })
-                    } else {
-                        LoginScreen(expired = Repo.sessionExpired) { AuthManager.login(this) }
-                    }
+                if (loggedIn.value && !Repo.sessionExpired) {
+                    AppScaffold(onLogout = { Repo.logout(); loggedIn.value = false })
+                } else {
+                    LoginScreen(expired = Repo.sessionExpired) { AuthManager.login(this) }
                 }
             }
         }
@@ -74,24 +62,5 @@ class MainActivity : ComponentActivity() {
             }.getOrNull()?.let { Repo.saveProfile(it) }
         }
         loggedIn.value = true
-    }
-}
-
-@Composable
-private fun LoginScreen(expired: Boolean, onLogin: () -> Unit) {
-    Column(
-        Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Crumina", style = MaterialTheme.typography.headlineLarge)
-        Spacer(Modifier.height(8.dp))
-        Text("Your money, all in one place.", style = MaterialTheme.typography.bodyMedium)
-        if (expired) {
-            Spacer(Modifier.height(16.dp))
-            Text("Your session expired. Please sign in again.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
-        }
-        Spacer(Modifier.height(32.dp))
-        Button(onClick = onLogin) { Text("Sign in with Google") }
     }
 }

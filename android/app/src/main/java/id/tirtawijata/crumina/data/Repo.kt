@@ -231,6 +231,14 @@ object Repo {
     val daily30: Double get() = spent30 / 30.0
     val biggest30: Double get() = spendWithin(30).maxOfOrNull { it.amountMain } ?: 0.0
     val count30: Int get() = spendWithin(30).size
+    fun topMerchants(days: Long): List<Pair<String, Double>> =
+        spendWithin(days).filter { !it.merchant.isNullOrBlank() }.groupBy { it.merchant!!.trim() }
+            .map { it.key to it.value.sumOf { s -> s.amountMain } }.sortedByDescending { it.second }
+
+    /** First name for the greeting, and the avatar initial (web: "Good evening, Marcel"). */
+    val firstName: String? get() = profile?.name?.trim()?.split(" ")?.firstOrNull()?.takeIf { it.isNotBlank() }
+        ?: profile?.email?.substringBefore("@")?.takeIf { it.isNotBlank() }
+    val initial: String get() = firstName?.take(1)?.uppercase() ?: "C"
 
     fun recurring(): List<Pair<String, Double>> =
         spendWithin(120).filter { !it.merchant.isNullOrBlank() }

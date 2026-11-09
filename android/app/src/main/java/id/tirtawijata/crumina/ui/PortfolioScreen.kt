@@ -12,11 +12,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import id.tirtawijata.crumina.data.Holding
 import id.tirtawijata.crumina.data.Repo
@@ -36,39 +35,49 @@ import java.util.Locale
 @Composable
 fun PortfolioScreen() {
     val r = Repo
+    val cr = LocalCr.current
     var showAdd by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(r.t("portfolio"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            TextButton(onClick = { showAdd = true }) { Text("+ " + r.t("add_holding")) }
+    PageHeader(r.t("portfolio"), String.format(r.t("holdings_n"), r.holdings.size)) {
+        PillButton(r.t("q_holdings"), { showAdd = true })
+    }
+    val value = r.holdings.sumOf { r.conv(it.units * it.price, it.ccy) }
+    val cost = r.holdings.sumOf { r.conv(it.units * it.avg, it.ccy) }
+    val gain = value - cost
+    val pct = if (cost > 0) gain / cost * 100 else 0.0
+    HeroCard {
+        HeroLabel(r.t("pf_value"))
+        HeroValue(r.money(value))
+        if (r.holdings.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                (if (gain >= 0) "▲ +" else "▼ ") + r.money(gain, signed = gain < 0) + " (" + (if (pct >= 0) "+" else "") + String.format(Locale.US, "%.1f", pct) + "%) " + r.t("all_time"),
+                color = if (gain >= 0) Color(0xFF2FE0C2) else Color(0xFFFF8BA5), fontSize = 13.sp, fontWeight = FontWeight.SemiBold
+            )
         }
-        Spacer(Modifier.height(8.dp))
-        if (r.holdings.isEmpty()) Text(r.t("no_holdings"), color = Color(0xFF7A8AA0))
+    }
+    Gap()
+    CrCard {
+        if (r.holdings.isEmpty()) EmptyText(r.t("no_holdings"))
         r.holdings.forEachIndexed { i, h ->
-            val value = h.units * h.price
-            val gain = if (h.avg > 0.0) (h.price / h.avg - 1.0) * 100.0 else 0.0
-            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(if (h.name.isBlank()) h.symbol else h.name, style = MaterialTheme.typography.bodyLarge)
-                    Text(h.symbol + " · " + h.units.toString() + " @ " + r.money(h.avg, h.ccy, false), style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A8AA0))
-                }
+            val g = if (h.avg > 0.0) (h.price / h.avg - 1.0) * 100.0 else 0.0
+            val tag = h.symbol.substringBefore('.').take(2).uppercase()
+            ListRow(i == 0, { IconTile(tag, NavyGrad) }, if (h.name.isBlank()) h.symbol else h.name,
+                fmtUnits(h.units) + " @ " + r.money(h.avg, h.ccy, false)) {
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(r.money(value, h.ccy, false))
-                    Text(
-                        (if (gain >= 0) "+" else "") + String.format(Locale.US, "%.1f", gain) + "%",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (gain >= 0) Color(0xFF0FA98E) else Color(0xFFE0476A)
-                    )
+                    Ink(r.money(h.units * h.price, h.ccy, false), 14.sp, FontWeight.Bold)
+                    Ink((if (g >= 0) "+" else "") + String.format(Locale.US, "%.1f", g) + "%", 11.5.sp, FontWeight.SemiBold, color = if (g >= 0) cr.green else cr.red)
                 }
-                IconButton(onClick = { r.removeHolding(i) }) { Icon(Icons.Filled.Delete, contentDescription = r.t("remove")) }
+                RemoveX { r.removeHolding(i) }
             }
         }
     }
     if (showAdd) AddHoldingDialog(onDismiss = { showAdd = false }, onSave = { r.addHolding(it); showAdd = false })
 }
 
+private fun fmtUnits(u: Double): String = if (u == Math.floor(u)) String.format(Locale.US, "%,.0f", u) else String.format(Locale.US, "%,.4f", u).trimEnd('0')
+
 @Composable
-private fun AddHoldingDialog(onDismiss: () -> Unit, onSave: (Holding) -> Unit) {
+fun AddHoldingDialog(onDismiss: () -> Unit, onSave: (Holding) -> Unit) {
     val r = Repo
     var symbol by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
@@ -76,7 +85,7 @@ private fun AddHoldingDialog(onDismiss: () -> Unit, onSave: (Holding) -> Unit) {
     var avg by remember { mutableStateOf("") }
     var ccy by remember { mutableStateOf("USD") }
     val valid = symbol.isNotBlank() && units.toDoubleOrNull() != null
-    AlertDialog(
+    CrDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
@@ -99,11 +108,11 @@ private fun AddHoldingDialog(onDismiss: () -> Unit, onSave: (Holding) -> Unit) {
         title = { Text(r.t("add_holding")) },
         text = {
             Column {
-                OutlinedTextField(value = symbol, onValueChange = { symbol = it }, label = { Text(r.t("symbol")) }, singleLine = true)
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(r.t("name")) }, singleLine = true)
-                OutlinedTextField(value = units, onValueChange = { units = it }, label = { Text(r.t("units")) }, singleLine = true)
-                OutlinedTextField(value = avg, onValueChange = { avg = it }, label = { Text(r.t("avg_cost")) }, singleLine = true)
-                OutlinedTextField(value = ccy, onValueChange = { ccy = it }, label = { Text(r.t("currency")) }, singleLine = true)
+                CrField(value = symbol, onValueChange = { symbol = it }, label = { Text(r.t("symbol")) }, singleLine = true)
+                CrField(value = name, onValueChange = { name = it }, label = { Text(r.t("name")) }, singleLine = true)
+                CrField(value = units, onValueChange = { units = it }, label = { Text(r.t("units")) }, singleLine = true)
+                CrField(value = avg, onValueChange = { avg = it }, label = { Text(r.t("avg_cost")) }, singleLine = true)
+                CrField(value = ccy, onValueChange = { ccy = it }, label = { Text(r.t("currency")) }, singleLine = true)
             }
         }
     )
