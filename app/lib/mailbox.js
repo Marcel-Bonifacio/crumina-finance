@@ -3,7 +3,7 @@
 const { getCookie } = require('./session');
 const { decrypt } = require('./crypto');
 
-// ---- search spec -> Gmail query string (kept byte-identical to the historical queries) ----
+// ---- search spec -> Gmail query string (Gmail search operators) ----
 function gmailQuery(spec){
   var q=[];
   if(spec.sinceDays) q.push('newer_than:'+spec.sinceDays+'d');

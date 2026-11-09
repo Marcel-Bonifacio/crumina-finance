@@ -20,7 +20,8 @@
 Crumina is a personal-finance web app you run yourself. It reads your own bank
 statements and transaction alerts from your mailbox, turns them into one view of
 your accounts, spending and net worth, and keeps the data on your side. There is no
-shared ledger and no third-party analytics. Sign in with Google, connect any mailbox
+shared ledger and no analytics in the web app (the Android app's ML Kit OCR reports
+usage metrics to Google; see the privacy page). Sign in with Google, connect any mailbox
 over IMAP, or skip accounts entirely and keep everything on one device.
 
 It installs as a Progressive Web App, works offline once it has synced, and is
@@ -47,30 +48,30 @@ from the `android/` project.
 - [Security and privacy](#security-and-privacy)
 - [Contributing](#contributing)
 - [License](#license)
+- [Third-party software](#third-party-software)
 
 ## Features
 
-- **Reads your mailbox, read-only.** Connects to Gmail through OAuth or to any server
-  over IMAP, and never sends, deletes or changes mail.
-- **Parses monthly statements.** Extracts balances and transaction rows from PDF
-  e-statements, and unlocks password-protected PDFs with a per-bank password you enter.
-- **Captures real-time alerts.** Turns bank and card notification emails into
-  transactions as they arrive, with a heuristic parser for senders it does not know.
-- **Reconciles the two sources.** Matches alerts against the monthly statement, pairs
-  transfers between your own accounts, and treats a card bill payment as settlement
-  rather than spending, so the same money is not counted twice.
-- **Shows one net worth.** Rolls up savings, cards, securities cash and a manually
-  tracked investment portfolio, with live prices for holdings.
-- **Explains spending.** Cleans and categorises transactions, shows a "Where it goes"
-  breakdown and an Insights view over a date range you choose, plus a rough carbon
-  estimate of your spending.
-- **Reads receipts on the device.** Optional OCR runs in the browser with a bundled
-  Tesseract build; the photo never leaves your machine.
-- **Runs without an account.** Local mode keeps everything in the browser, useful for
-  trying it or for a single device.
-- **Installs and works offline.** A service worker caches the app shell so it opens
-  without a connection and syncs again when one returns.
-- **Speaks two languages.** English and Bahasa Indonesia, switchable in settings.
+- Reads Gmail through OAuth, or any mailbox over IMAP. Access is read-only; Crumina
+  never sends, deletes or changes mail.
+- Extracts balances and transaction rows from monthly PDF e-statements, and unlocks
+  password-protected PDFs with a per-bank password you enter.
+- Turns bank and card notification emails into transactions as they arrive, with a
+  heuristic parser for senders it does not know.
+- Matches alerts against the monthly statement, pairs transfers between your own
+  accounts, and treats a card bill payment as settlement rather than spending, so the
+  same money is not counted twice.
+- Rolls savings, cards, securities cash and a manually tracked investment portfolio
+  into one net worth, with live prices for holdings.
+- Cleans and categorises transactions, with a "Where it goes" breakdown, an Insights
+  view over a date range you choose, and a rough carbon estimate of your spending.
+- Optional receipt OCR runs in the browser with a bundled Tesseract build; the photo
+  never leaves your machine.
+- Local mode needs no account and keeps everything in the browser, useful for trying
+  it or for a single device.
+- A service worker caches the app shell, so the app opens without a connection and
+  syncs again when one returns.
+- The interface language (English or Bahasa Indonesia) can be switched in settings.
 
 ## How it works
 
@@ -101,11 +102,12 @@ flowchart LR
     UI -. cached .- SW
 ```
 
-Anything specific to a bank lives in one file, [`app/lib/banks.js`](app/lib/banks.js):
-the email senders to look for, statement password slots, balance patterns, and the
-domain-to-name map for alerts. The parsing engines stay generic and read from that
-registry, so a new institution is an edit to one file. For the full picture, read
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Most bank-specific settings live in [`app/lib/banks.js`](app/lib/banks.js): the email
+senders for statements, statement password slots, balance patterns, and the
+domain-to-name map for alerts. The alert sender domains that sync searches are listed
+in `app/api/sync.js`, and the CIMB and Permata alert parsers are in `app/lib/parse.js`.
+[docs/BANK-PARSERS.md](docs/BANK-PARSERS.md) lists the steps to add a bank. For the
+full picture, read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Quick start
 
@@ -143,10 +145,13 @@ The full deployment guide, including systemd and any-platform notes, is in
 
 ## Configuration
 
-Configuration comes entirely from environment variables; nothing is hard-coded. The
-two required values are `SESSION_SECRET` (signs the session cookie) and
-`TOKEN_ENC_KEY` (a 32-byte base64 key that encrypts stored secrets). Google sign-in
-and IMAP are optional and activate only when their variables are set.
+Server configuration comes from environment variables. The two required values are
+`SESSION_SECRET` (signs the session cookie) and `TOKEN_ENC_KEY` (a 32-byte base64 key
+that encrypts stored secrets). Google sign-in and IMAP are optional and activate only
+when their variables are set. The Android app's domain is set in code, not in the
+environment: `APP_LINK` in `app/api/auth/callback.js`, `API_BASE` in
+`android/app/build.gradle.kts`, and the App Link host in `AndroidManifest.xml` and
+`network_security_config.xml`.
 
 | Variable | Required | Purpose |
 |---|---|---|
@@ -154,10 +159,14 @@ and IMAP are optional and activate only when their variables are set.
 | `TOKEN_ENC_KEY` | yes | AES-256-GCM key for tokens, credentials and statement passwords |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REDIRECT_URI` | no | Enable Google sign-in |
 | `IMAP_ENABLED` | no | Show the IMAP sign-in option (self-host) |
+| `IMAP_ALLOW_PRIVATE` | no | Allow IMAP hosts on private or loopback addresses |
 | `PORT` | no | Port for the self-host server (default 3000) |
+| `TRUST_PROXY` | no | When to trust `X-Real-IP` for rate limiting (default: only from Vercel or a private-network proxy) |
 
-Before running a public instance, replace the placeholder domain, contact email and
-repository link noted in [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
+Before running a public instance, change the domain and contact email in
+`app/privacy.html` and `app/terms.html`, and point `REPO` in `app/app.js` at the
+repository that holds your source. [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
+lists each location.
 
 ## Supported statements
 
@@ -167,10 +176,11 @@ due", and similar) for everything else. Captured amounts are read with a parser 
 handles both `1,234,567.89` and `1.234.567` number styles, so currency formatting does
 not trip it up.
 
-Adding an institution means appending one entry to `app/lib/banks.js`: the sender
-address, a password slot if the PDF is protected, and one or more balance patterns. No
-change to the parsing engine is needed. The format and a worked example are in
-[docs/BANK-PARSERS.md](docs/BANK-PARSERS.md).
+Adding an institution's statements means appending one entry to `app/lib/banks.js`:
+the sender address, a password slot if the PDF is protected, and one or more balance
+patterns. No change to the parsing engine is needed. Real-time alerts from a new
+sender also need its domain in `app/api/sync.js`. The format and a worked example are
+in [docs/BANK-PARSERS.md](docs/BANK-PARSERS.md).
 
 ## Project structure
 
@@ -179,7 +189,7 @@ app/                 the deployable web app
   index.html app.js  client (vanilla JS, no framework, no build)
   api/               request handlers, one file per endpoint
   lib/               session, crypto, mailbox, parsing, rate limiting
-  lib/banks.js       institution registry (the only bank-specific file)
+  lib/banks.js       institution registry (senders, balance patterns, labels)
   vendor/tesseract/  on-device OCR assets
   brand/             logos and icons
 selfhost/            server.js, Dockerfile, compose, Caddy, systemd unit
@@ -243,3 +253,10 @@ Crumina is released under the GNU Affero General Public License v3.0
 run a modified copy as a service that others can reach, you must offer those users the
 source of your modified version. The repository link in `app/app.js` is how they reach
 it, so point it at your own source when you deploy.
+
+## Third-party software
+
+The on-device OCR in `app/vendor/tesseract/` is tesseract.js 5.1.1 with
+tesseract.js-core and the English and Indonesian trained data, all under the Apache
+License 2.0. These files and the npm and Android dependencies keep their own licenses;
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) lists them.

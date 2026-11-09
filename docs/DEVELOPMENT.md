@@ -6,8 +6,8 @@ running takes a clone and a Node install.
 ## Setup
 
 ```bash
-git clone https://github.com/your-org/crumina.git
-cd crumina/app
+git clone https://github.com/Marcel-Bonifacio/crumina-finance.git
+cd crumina-finance/app
 npm ci                      # PDF and IMAP libraries
 cd ..
 SESSION_SECRET=dev TOKEN_ENC_KEY=$(openssl rand -base64 32) \
@@ -39,8 +39,9 @@ A few conventions are worth knowing before you change things:
   `app/app.js` (client), and the two must stay identical so a transaction looks the
   same whether it was parsed on the server or entered locally. If you change one,
   change the other.
-- **Bank specifics go in `app/lib/banks.js`**, never in the parsing engines. See
-  [BANK-PARSERS.md](BANK-PARSERS.md).
+- **Bank specifics go in `app/lib/banks.js`** where possible, not in the parsing
+  engines. Alert sender domains are the exception: they are listed in `app/api/sync.js`.
+  See [BANK-PARSERS.md](BANK-PARSERS.md).
 - **Text rendered into the DOM is escaped.** Keep it that way; the CSP forbids inline
   scripts, so event handlers are wired with delegation rather than `onclick`.
 - **Endpoints are sometimes combined.** `api/guest.js`, for example, handles the local
@@ -73,12 +74,14 @@ node -e "console.log(require('./app/lib/parse').parseAlert('alerts@bank.example'
 
 ## Before you commit
 
-- Run `node --check` on any server file you touched (`node --check app/app.js`, etc.).
-- Editing `app/app.js` or `app/index.html`: they are large single files with some
-  multi-byte characters (icons, currency glyphs). Prefer targeted edits over wholesale
-  rewrites, and confirm the file still parses afterward.
+- Run `node --check` on any JavaScript file you touched (`node --check app/lib/parse.js`,
+  `node --check app/app.js`, etc.). `app.js` and `index.html` contain icons and currency
+  glyphs, so check the diff for mangled characters before you commit.
 - If you changed a request handler, hit it once locally and check the JSON.
 
 ## Releasing a build
 
-There is nothing to
+There is nothing to build for the web app: deploy `app/` as it is, or restart
+`selfhost/server.js`. Android releases come from CI. Push a `vX.Y.Z` tag and
+`.github/workflows/android.yml` builds the signed APK and attaches it to a GitHub
+pre-release. This needs the keystore secrets listed in [ANDROID.md](ANDROID.md).

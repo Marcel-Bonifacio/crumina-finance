@@ -25,11 +25,11 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:18px;color:v
 </style></head><body><div class="wrap">
 <div class="top"><svg viewBox="0 0 512 512"><rect x="16" y="16" width="480" height="480" rx="120" fill="#0A1B3D"/><circle cx="247" cy="256" r="118" fill="none" stroke="#fff" stroke-width="48" stroke-linecap="round" stroke-dasharray="515 227" transform="rotate(55 247 256)"/><circle cx="357" cy="256" r="50" fill="#2FE0C2"/></svg><b>Crumina</b></div>
 <h1>Privacy Policy</h1>
-<div class="upd">Last updated: 20 June 2026</div>
+<div class="upd">Last updated: 28 October 2026</div>
 
-<p>This Privacy Policy explains how <strong>Crumina</strong> (the “Service”, “we”, “us”, “our”) collects, uses, stores, and protects your information when you use the Crumina personal‑finance application at <strong>crumina.example.com</strong>. Crumina is built to minimise the data it holds: it is designed so that your financial information stays under your control and is not retained on our servers.</p>
+<p>This Privacy Policy explains how <strong>Crumina</strong> (the “Service”, “we”, “us”, “our”) collects, uses, stores, and protects your information when you use the Crumina personal‑finance web app at <strong>crumina.tirtawijata.com</strong> or the Crumina Android app, which connects to the same server. Crumina is built to minimise the data it holds: it is designed so that your financial information stays under your control and is not retained on our servers.</p>
 
-<div class="card"><strong>The short version.</strong> Crumina reads <em>only</em> the bank, card, and statement emails it needs from your Google account, in read‑only mode, to show you your own financial dashboard. We do not store your emails or financial data on our servers, we do not sell or share it, and we never use it for advertising. You can revoke access at any time.</div>
+<div class="card"><strong>The short version.</strong> Crumina reads <em>only</em> the bank, card, and statement emails it needs, from your Google account in read‑only mode or, where this instance offers it, from a mailbox you connect by IMAP, to show you your own financial dashboard. You can also use it in local mode without connecting any mailbox. Receipt scanning runs on your own device. We do not store your emails or financial data on our servers, we do not sell or share it, and we never use it for advertising. You can revoke access at any time.</div>
 
 <h2>1. Who we are &amp; how to contact us</h2>
 <p>Crumina is operated by its developer (the “Operator”). For any privacy question, request, or complaint, contact us at <a href="mailto:contact@tirtawijata.com">contact@tirtawijata.com</a>. If you are in a jurisdiction that requires a designated controller or representative, the Operator acts as the data controller for the purposes of this Policy.</p>
@@ -39,16 +39,23 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:18px;color:v
 <p>When you sign in with Google we receive, via OpenID Connect, your basic profile: your <strong>email address, name, and profile picture</strong>. This is used to create your session and personalise the app.</p>
 <h3>(b) Gmail data (restricted scope: <code>gmail.readonly</code>)</h3>
 <p>With your explicit consent, Crumina is granted <strong>read‑only</strong> access to your Gmail. Crumina queries your mailbox <strong>only</strong> for messages from financial institutions (bank and card transaction alerts and e‑statements) in order to extract the data the app displays: account balances, transactions, and the merchant/amount/date of each item. Crumina <strong>never</strong> sends, composes, modifies, deletes, or labels your email, and does not read messages outside this financial purpose.</p>
-<h3>(c) Information you enter</h3>
-<p>Accounts, holdings, budgets, savings goals, statement passwords, and preferences you add manually.</p>
-<h3>(d) Technical information</h3>
-<p>Standard request metadata (e.g., IP address) used transiently for security and rate‑limiting, and data your browser stores locally (see Section 5).</p>
+<h3>(c) Email accessed by IMAP (only where this instance offers it)</h3>
+<p>IMAP sign‑in is switched off unless the operator of an instance turns it on. Where it is offered, you can connect Outlook, iCloud, or another mailbox by giving your email address, your mail server, and an app password. Our server checks these details by signing in to your mail server over an encrypted connection. Each time you sync, it signs in again, searches your inbox for messages from financial institutions, and extracts the same data described in (b). If your mail server cannot run that search, Crumina reads your most recent inbox messages instead and keeps only the bank and card data it recognises. Crumina does not send, move, or delete your email.</p>
+<h3>(d) Local mode</h3>
+<p>You can use Crumina without connecting Google or any mailbox. In local mode we issue a signed session cookie that identifies you only as a local user. The accounts, transactions, and other entries you add stay in your browser’s local storage on your device.</p>
+<h3>(e) Information you enter</h3>
+<p>Accounts, holdings, budgets, savings goals, statement passwords, preferences, receipt images, and PDF statements you add or upload manually.</p>
+<h3>(f) Receipt scanning (on‑device text recognition)</h3>
+<p>When you scan a receipt, text recognition runs on your own device. The web app uses Tesseract OCR, which your browser downloads from our server and runs locally. The Android app uses Google’s ML Kit text recognition, which runs on the phone. The receipt image is not sent to our server or to Google for recognition. In the web app, a receipt you attach to an entry is saved with that entry in your browser’s local storage.</p>
+<h3>(g) Technical information</h3>
+<p>Standard request metadata (e.g., IP address) used transiently for security and rate‑limiting, and data stored locally in your browser or in the Android app (see Section 5).</p>
 
 <h2>3. How we use information</h2>
 <ul>
 <li>To authenticate you and operate the Service;</li>
 <li>To parse your financial emails/statements and present your balances, transactions, insights, budgets, and trends;</li>
 <li>To convert amounts to your selected display currency (using anonymous published exchange rates);</li>
+<li>To look up names and prices for portfolio holdings you add;</li>
 <li>To protect the Service (security, abuse prevention, rate‑limiting);</li>
 <li>To comply with legal obligations.</li>
 </ul>
@@ -61,8 +68,9 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:18px;color:v
 <h2>5. Storage, retention, and where your data lives</h2>
 <ul>
 <li><strong>No server‑side database.</strong> Crumina does not store your emails, transactions, or balances on our servers. Financial emails are fetched on demand, parsed <strong>in memory</strong>, and the results are returned to your browser.</li>
-<li><strong>On your device.</strong> Parsed results and your manual entries are cached in your browser’s local storage on your own device, so they remain under your control. Clearing your browser data removes them.</li>
-<li><strong>Access tokens.</strong> Your Google refresh token is stored <strong>encrypted (AES‑256‑GCM)</strong> in a secure, HttpOnly cookie so the app can refresh access on your behalf; it is never exposed to client‑side scripts. Statement passwords you provide are likewise encrypted at rest. These persist only for the life of your session (up to 30 days) or until you sign out or revoke access.</li>
+<li><strong>On your device.</strong> In the web app, parsed results and your manual entries are cached in your browser’s local storage on your own device, so they remain under your control. Clearing your browser data removes them. In the Android app, they are kept in the app’s encrypted storage (protected by a key in the Android Keystore), are excluded from cloud backups and device transfers, and are deleted when you log out.</li>
+<li><strong>Access tokens.</strong> Your Google refresh token is stored <strong>encrypted (AES‑256‑GCM)</strong> in a secure, HttpOnly cookie so the app can refresh access on your behalf; it is never exposed to client‑side scripts. Statement passwords you provide are likewise encrypted at rest. If you connect a mailbox by IMAP, your email address, mail server, and app password are stored the same way, encrypted (AES‑256‑GCM) in an HttpOnly cookie. These persist only for the life of your session (up to 30 days) or until you sign out or revoke access.</li>
+<li><strong>Android app.</strong> The Android app does not use cookies. It keeps your session, your encrypted Google refresh token, and any statement passwords in its encrypted storage, and sends them to our server over TLS only with the requests that need them. Our server uses them in memory to answer the request and does not keep them.</li>
 <li>Uploaded PDF statements are processed in memory and are not retained.</li>
 </ul>
 
@@ -70,8 +78,12 @@ footer{margin-top:40px;border-top:1px solid var(--line);padding-top:18px;color:v
 <p>We do <strong>not</strong> sell, rent, or trade your personal information, and we do not share it for advertising. We rely on a limited set of service providers strictly to operate Crumina:</p>
 <ul>
 <li><strong>Google LLC</strong>: authentication and Gmail API;</li>
+<li><strong>Google LLC (ML Kit, Android app only)</strong>: receipt images are processed on your device and are not sent to Google. Google states that ML Kit sends Google device information (such as manufacturer, model, and OS version), app information, a per‑installation identifier, and performance and usage metrics for diagnostics and usage analytics, under the <a href="https://developers.google.com/ml-kit/terms" target="_blank" rel="noopener">ML Kit Terms</a>;</li>
+<li><strong>Google Fonts</strong>: our web pages load the Plus Jakarta Sans font from Google’s servers (fonts.googleapis.com and fonts.gstatic.com), so your browser sends your IP address and browser details to Google when it fetches the font;</li>
+<li><strong>Yahoo Finance</strong>: if you add portfolio holdings, our server sends the ticker symbols and search text you enter to Yahoo Finance to look up names and prices, with no account details attached;</li>
+<li><strong>Your email provider</strong>: if you connect a mailbox by IMAP, our server signs in to it with the details you give, as described in Section 2(c);</li>
 <li><strong>Hosting/infrastructure provider</strong>: to serve the application;</li>
-<li><strong>A public foreign‑exchange rate API</strong>: which receives <em>no</em> personal data (only a currency code).</li>
+<li><strong>ExchangeRate-API (open.er-api.com)</strong>: our server fetches published exchange rates from it; it receives <em>no</em> personal data.</li>
 </ul>
 <p>We may disclose information if required by law, or to protect the rights, safety, and security of our users and the Service.</p>
 

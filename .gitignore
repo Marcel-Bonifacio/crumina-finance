@@ -6,10 +6,27 @@ node_modules/
 .env.*
 !.env.example
 
+# signing material and local build config (anywhere in the repo, not only android/)
+*.jks
+*.keystore
+*.p12
+*.pfx
+keystore.properties
+local.properties
+
+# build outputs
+*.apk
+*.aab
+
 # real user data (never commit)
 /data/
 *.local.json
 finance-data.json
+
+# real bank statements and alert emails kept for parser work (use synthetic fixtures in app/test/fixtures.js)
+*.pdf
+*.eml
+app/test/real/
 
 # OS / editor
 .DS_Store

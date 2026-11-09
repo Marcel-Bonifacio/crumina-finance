@@ -1,7 +1,7 @@
 // Crumina self-host server (any Node host).
-// Runs the SAME app/ that the managed host serves: static frontend + the app/api/*.js handlers
-// (which are written in Node (req,res) style) + the session gate that the platform
-// edge middleware does. No framework, only Node built-ins. Node 18+ (for global fetch).
+// Runs the SAME app/ that the Vercel deployment serves: static frontend + the app/api/*.js handlers
+// (which are written in Node (req,res) style) + the session gate that app/middleware.js
+// (Vercel edge middleware) applies. No framework, only Node built-ins. Node 18+ (for global fetch).
 const http = require('http'), fs = require('fs'), path = require('path'), url = require('url');
 const APP = path.join(__dirname, '..', 'app');
 
@@ -19,7 +19,7 @@ const { fromReq } = require(path.join(APP, 'lib', 'session'));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8',
   '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.ico': 'image/x-icon', '.txt': 'text/plain' };
-// Security headers — mirror the app's response headers so behaviour matches production.
+// Security headers: same as the response headers in app/vercel.json, so behaviour matches production.
 const SEC = {
   'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
@@ -36,15 +36,21 @@ function serveFile(res, file, noStore) {
     res.end(buf);
   });
 }
-// Public (no auth) — mirrors the edge middleware matcher exclusions.
+// Public (no auth): keep in sync with the matcher exclusions in app/middleware.js.
 function isPublic(p) {
   return p.startsWith('/api/') || p === '/login' || p === '/login.html' || p === '/home' || p === '/home.html' || p === '/privacy' || p === '/privacy.html' || p === '/terms' || p === '/terms.html' || p.startsWith('/brand/') || p.startsWith('/vendor/')
-    || p === '/favicon.ico' || p === '/manifest.webmanifest' || p === '/sw.js' || p === '/app.js' || p === '/login.js' || p.startsWith('/icon-');
+    || p === '/favicon.ico' || p === '/manifest.webmanifest' || p === '/sw.js' || p === '/app.js' || p === '/login.js' || p.startsWith('/icon-')
+    || p.startsWith('/.well-known/') || p.startsWith('/auth/android');
 }
+// Log, never crash: an unhandled rejection would otherwise take the whole server down.
+process.on('unhandledRejection', function (e) { console.error('unhandledRejection', e); });
 
 http.createServer(async function (req, res) {
-  const pathname = decodeURIComponent(url.parse(req.url).pathname || '/');
   try {
+    let pathname = null;
+    try { pathname = decodeURIComponent(url.parse(req.url).pathname || '/'); } catch (e) {}
+    // Route and authorize canonical paths only: no dot segments (incl. decoded %2e/%2f), '//', backslashes or NUL.
+    if (!pathname || pathname.includes('\0') || pathname.includes('\\') || path.posix.normalize(pathname) !== pathname) { res.statusCode = 400; sec(res); return res.end('Bad request'); }
     if (pathname === '/healthz') { res.statusCode = 200; res.setHeader('Content-Type', 'text/plain'); return res.end('ok'); }
     // API -> the existing serverless handlers (each enforces its own auth)
     if (pathname.startsWith('/api/')) {
@@ -57,6 +63,8 @@ http.createServer(async function (req, res) {
     if (pathname === '/login' || pathname === '/login.html') return serveFile(res, path.join(APP, 'login.html'), true);
     // Clean URLs for public legal/landing pages
     if (pathname === '/privacy' || pathname === '/terms' || pathname === '/home') return serveFile(res, path.join(APP, pathname.slice(1) + '.html'), true);
+    // Android App Link fallback page (public, as on Vercel)
+    if (pathname === '/auth/android' || pathname === '/auth/android.html') return serveFile(res, path.join(APP, 'auth', 'android.html'), true);
     // Static public assets
     if (pathname !== '/' && isPublic(pathname)) {
       const f = path.join(APP, pathname);
@@ -66,5 +74,8 @@ http.createServer(async function (req, res) {
     // Gated app shell (everything else, incl. "/")
     if (!fromReq(req)) { res.statusCode = 302; sec(res); res.setHeader('Location', '/login'); return res.end(); }
     return serveFile(res, path.join(APP, 'index.html'), true);
-  } catch (e) { console.error('server', e); res.statusCode = 500; sec(res); res.end('Server error'); }
+  } catch (e) {
+    console.error('server', e);
+    if (!res.headersSent) { res.statusCode = 500; sec(res); res.end('Server error'); } else if (!res.writableEnded) res.destroy();
+  }
 }).listen(PORT, function () { console.log('Crumina self-host listening on :' + PORT); });

@@ -1,5 +1,5 @@
-// Real-time alert parsing. Bank-specific senders and domain names live in
-// banks.js; this module only knows how to pull fields out of an alert body.
+// Real-time alert parsing. Sender domain names and alert adapters come from
+// banks.js; this module pulls fields out of an alert body.
 const { DOMAIN_NAMES, ALERT_ADAPTERS } = require('./banks');
 function strip(html){return html.replace(/<[^>]+>/g,' ').replace(/&amp;/g,'&').replace(/&nbsp;/g,' ').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim();}
 function clean(m){return m.replace(/\s+(IDN|SGP|USA)\b.*$/,'').replace(/\s{2,}/g,' ').trim();}

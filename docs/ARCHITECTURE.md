@@ -15,8 +15,9 @@ below.
 - **The client should work on its own.** The app shell, parsing of locally entered
   data, categorisation and the charts all run in the browser. A network round-trip
   is needed only to pull fresh mail or live prices.
-- **Adding a bank should not mean touching the engine.** Institution details live
-  in a single registry; the parsers are generic.
+- **Adding a bank should not mean touching the engine.** Most institution details
+  live in a single registry (`lib/banks.js`) and the parsers read from it. The
+  exceptions are listed in [BANK-PARSERS.md](BANK-PARSERS.md).
 - **No build step.** The client is plain HTML, CSS and JavaScript so it can be read,
   audited and modified without a toolchain.
 
@@ -46,7 +47,9 @@ what makes the app installable and usable without a connection.
 
 The client owns: rendering, categorisation, the spending and Insights math, manual
 transactions and the portfolio, the carbon estimate, theming, and language. It calls
-the server only to sign in, pull mail-derived data, and fetch prices.
+the server to sign in and out, load the profile, pull mail-derived data, parse an
+uploaded PDF statement (`/api/upload`), save statement passwords (`/api/unlock`), and
+fetch prices.
 
 ### Server (`app/api/` and `app/lib/`)
 
@@ -113,8 +116,9 @@ A typical "refresh my data" cycle:
 Two inputs become one transaction feed.
 
 - **Monthly statements** (`lib/statements.js`). Text is extracted from the PDF with
-  `pdfjs-dist`. Balances are matched by the patterns in the institution registry;
-  transaction rows are read by two strategies, a running-balance parser that checks
+  `pdfjs-dist`, from at most the first 12 pages and capped at 200,000 characters, since
+  a small compressed PDF can expand to megabytes of text. Balances are matched by the patterns in the institution registry;
+  transaction rows are read by two strategies: a running-balance parser that checks
   each row's delta against the printed balance, and a flat parser for layouts without
   a balance column. Both reject promotional lines.
 - **Real-time alerts** (`lib/parse.js`). The sender selects a field extractor from the
@@ -148,9 +152,12 @@ Two cases need care, because both can double-count money:
 
 `lib/mailbox.js` is the seam that lets the same handlers work with Gmail or any IMAP
 server. It exposes `getMailbox(req)`, which returns an object with `search`, `fetch`
-and `close`. A search spec (sender, since-days, subject, has-attachment, file
-extension) is translated to a Gmail query or an IMAP SEARCH, and messages are
-normalised to `{from, subject, dateMs, html, text, attachments}`. Callers in
+and `close`. A search spec (sender or sender domains, since-days, subject,
+has-attachment, file extension, excluded subjects) becomes a Gmail query that applies
+every field. The IMAP SEARCH applies only since-days, subject and sender. It ignores
+has-attachment, file extension and excluded subjects, so `lib/statements.js` picks the
+PDF out of the fetched attachments itself. Messages are normalised to
+`{from, subject, dateMs, html, text, attachments}`. Callers in
 `api/sync.js` and `api/statements.js` never branch on the provider.
 
 ## Further reading

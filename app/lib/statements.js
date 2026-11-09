@@ -1,8 +1,9 @@
+const MAX_TEXT=200000; // cap on extracted text (a tiny compressed PDF can expand to megabytes)
 async function extractText(buf, password){
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const doc = await pdfjs.getDocument({ data:new Uint8Array(buf), password, isEvalSupported:false, useWorkerFetch:false, disableFontFace:true, useSystemFonts:false }).promise;
-  let t=''; const NP=Math.min(doc.numPages,12); for(let i=1;i<=NP;i++){ const pg=await doc.getPage(i); const c=await pg.getTextContent(); t+=' '+c.items.map(x=>x.str).join(' '); }
-  return t.replace(/\s+/g,' ');
+  let t=''; const NP=Math.min(doc.numPages,12); for(let i=1;i<=NP && t.length<MAX_TEXT;i++){ const pg=await doc.getPage(i); const c=await pg.getTextContent(); t+=' '+c.items.map(x=>x.str).join(' '); }
+  return t.replace(/\s+/g,' ').slice(0,MAX_TEXT);
 }
 const N=s=>parseFloat(s.replace(/,/g,''));
 const { STATEMENT_ADAPTERS } = require('./banks');
@@ -118,7 +119,7 @@ function parseTxnsRB(text){
     var rest=m[2];
     var cut=rest.search(/\s(Total|SALDO\s+AKHIR|closing\s+balance|ending\s+balance|PermataBank\.com|Halaman\/Page|Bersambung|Ringkasan)/i);
     if(cut>0) rest=rest.slice(0,cut);
-    var nums=rest.match(/\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\b/g)||[];
+    var nums=rest.match(/\d{1,3}(?:[.,]\d{3}){0,6}[.,]\d{2}\b/g)||[];
     if(nums.length<2) continue;
     var bal=parseAmt(nums[nums.length-1]); var amtCol=parseAmt(nums[nums.length-2]);
     var di=rest.lastIndexOf(nums[nums.length-2]);
@@ -134,7 +135,7 @@ function parseTxnsRB(text){
 }
 
 function parseTxnsFlat(text){
-  var out=[]; var NUM=/\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?|\d+[.,]\d{2}/g;
+  var out=[]; var NUM=/\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?|\d{1,15}[.,]\d{2}/g; // \d{1,15}, not \d+: no quadratic backtracking on long digit runs
   var parts=text.split(/(?=(?<!\d)\d{1,2}[\/\-\s](?:\d{1,2}|jan|feb|mar|apr|mei|may|jun|jul|agu|aug|sep|okt|oct|nov|des|dec)(?:[\/\-\s]\d{2,4})?\s)/i);
   for(var i=0;i<parts.length;i++){
     var p=parts[i].trim();

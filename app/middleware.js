@@ -1,4 +1,4 @@
-export const config = { matcher: ['/((?!api/|login.html|login|brand/|favicon.ico|manifest.webmanifest|sw.js|app.js|vendor/|privacy.html|privacy|terms.html|terms|home.html|home|icon-).*)'] };
+export const config = { matcher: ['/((?!api/|login.html|login|brand/|favicon.ico|manifest.webmanifest|sw.js|app.js|vendor/|privacy.html|privacy|terms.html|terms|home.html|home|icon-|\\.well-known/|auth/android).*)'] };
 function b64urlToBytes(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; const bin=atob(s); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return a; }
 function bytesToB64url(buf){ let bin=''; const a=new Uint8Array(buf); for(let i=0;i<a.length;i++) bin+=String.fromCharCode(a[i]); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 async function valid(token){

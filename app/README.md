@@ -1,9 +1,9 @@
-# Crumina, application package
+# Crumina app package
 
 This directory is the deployable Crumina web app: a static front end
 (`index.html`, `app.js`, the service worker and web manifest), serverless API
 handlers under `api/`, and shared server-side logic under `lib/`. The client has
-no build step, the files here are what ships.
+no build step. The files here are what ships.
 
 Most documentation lives at the repository root:
 
@@ -18,4 +18,7 @@ Most documentation lives at the repository root:
 - `login.html`, `login.js`, `home.html`, `privacy.html`, `terms.html`: public pages
 - `api/`: request handlers, one file per endpoint, written in Node `(req, res)` style
 - `lib/`: session, crypto, the mailbox abstraction, statement/alert parsing, rate limiting
-- `lib/banks.js`: the institution registry; add or remove a bank he
+- `lib/banks.js`: the institution registry; add or remove a bank here (alert senders
+  also go in `api/sync.js`, see [`../docs/BANK-PARSERS.md`](../docs/BANK-PARSERS.md))
+- `vendor/tesseract/`: the bundled Tesseract build for on-device receipt OCR
+- `test/`: parser tests (`npm test`)

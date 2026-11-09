@@ -43,9 +43,10 @@ Sessions expire 30 days after they are issued.
 The Google refresh token, the per-bank statement passwords, and the IMAP credentials
 are encrypted with **AES-256-GCM** before being written to a cookie. Each value uses a
 fresh 12-byte random IV; the stored blob is `IV || auth-tag || ciphertext`, base64. The
-key comes from `TOKEN_ENC_KEY`, which must decode to exactly 32 bytes, the app
-refuses to start otherwise. GCM's authentication tag means a tampered cookie fails to
-decrypt rather than yielding garbage.
+key comes from `TOKEN_ENC_KEY`, which must decode to exactly 32 bytes. The key is
+checked when a secret is first encrypted or decrypted, so a bad key makes sign-in,
+unlock and statement requests fail with an error. GCM's authentication tag means a
+tampered cookie fails to decrypt rather than yielding garbage.
 
 ### Cookies
 
@@ -67,8 +68,11 @@ decrypt rather than yielding garbage.
   only Gmail scope requested is `gmail.readonly`.
 - **IMAP.** Enabled only when the operator sets `IMAP_ENABLED`. The sign-in endpoint
   rejects cross-site requests (`Sec-Fetch-Site` and `Origin` checks), is rate-limited,
-  and caps the request body. Credentials are verified with a live IMAP connection
-  before being accepted, then encrypted into a cookie. Use an app-specific password,
+  and caps the request body. It connects only on port 993 (TLS) and refuses hosts that
+  resolve to private, loopback, link-local or reserved addresses unless the operator
+  sets `IMAP_ALLOW_PRIVATE`, so the form cannot be used to probe the internal network.
+  Credentials are verified with a live IMAP connection before being accepted, then
+  encrypted into a cookie. Use an app-specific password,
   not your main account password.
 
 ## Application hardening
@@ -83,9 +87,11 @@ decrypt rather than yielding garbage.
   statement field cannot inject markup.
 - **PDF parsing.** `pdfjs-dist` runs with `isEvalSupported: false`, fonts and system
   fonts disabled, and only text extraction, no page rendering. Uploaded PDFs are
-  capped at 4 MB.
-- **Rate limiting.** Per-IP throttling on the sign-in, sync, statement, upload and
-  price endpoints.
+  capped at 4 MB, and extracted text at 12 pages and 200,000 characters.
+- **Rate limiting.** Throttling counted per endpoint and client IP on the sign-in,
+  sync, statement, unlock, upload and price endpoints. Behind a proxy the client IP
+  comes from `X-Real-IP`, which is trusted only as configured by `TRUST_PROXY` (see
+  [CONFIGURATION.md](CONFIGURATION.md)).
 - **On-device OCR.** Receipt images are processed in the browser with a bundled
   Tesseract build; the image is never uploaded.
 
@@ -102,14 +108,14 @@ decrypt rather than yielding garbage.
 
 - Set strong, unique `SESSION_SECRET` and `TOKEN_ENC_KEY` values and keep them secret.
 - Terminate TLS in front of the app; the `Secure` cookies require HTTPS.
-- Replace the placeholder domain, contact email and repository link before running a
-  public instance (see [CONFIGURATION.md](CONFIGURATION.md)).
+- Replace the placeholder domain `crumina.example.com`, and change the contact email
+  and the repository link to your own, before running a public instance (see
+  [CONFIGURATION.md](CONFIGURATION.md)).
 - Keep the host and dependencies patched.
 
 ## Reporting a vulnerability
 
-Please report security issues privately rather than opening a public issue. Email the
-contact listed in your instance's privacy page (the upstream template uses
-`security@example.com` as a placeholder, replace it with your real contact). Include
-the steps to reproduce and the affected version or commit. We aim to acknowledge a
-report within a few days and to credit reporters who want it once a fix ships.
+Please report security issues privately rather than opening a public issue. Email
+contact@tirtawijata.com. Include the steps to reproduce and the affected version or
+commit. We aim to acknowledge a report within a few days and to credit reporters who
+want it once a fix ships.
