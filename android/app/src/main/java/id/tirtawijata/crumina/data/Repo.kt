@@ -23,6 +23,8 @@ object Repo {
     var mainCcy by mutableStateOf("IDR")
     var lang by mutableStateOf("en")
     var hideAmounts by mutableStateOf(false)
+    /** "light" (default), "dark" or "contrast". */
+    var theme by mutableStateOf("light")
 
     // local data
     var accounts by mutableStateOf<List<Account>>(emptyList())
@@ -35,6 +37,8 @@ object Repo {
     var stmtAccounts by mutableStateOf<List<StmtAccount>>(emptyList())
     var transactions by mutableStateOf<List<Txn>>(emptyList())
     var fx by mutableStateOf<Map<String, Double>>(emptyMap())
+    /** Base currency the rates in [fx] are quoted against. */
+    var fxBase by mutableStateOf("")
 
     // statement unlock
     var discoveredBanks by mutableStateOf<List<BankSlot>>(emptyList())
@@ -53,13 +57,15 @@ object Repo {
         if (ready) return
         store = Store(context.applicationContext)
         secure = SecureStore(context.applicationContext)
-        mainCcy = store.mainCcy; lang = store.lang; hideAmounts = store.hideAmounts
+        mainCcy = store.mainCcy; lang = store.lang; hideAmounts = store.hideAmounts; theme = store.theme
         accounts = store.accounts; holdings = store.holdings
         manualTx = store.manualTx; uploadedAccounts = store.uploadedAccounts
         store.profileJson?.let { profile = runCatching { Gson().fromJson(it, Profile::class.java) }.getOrNull() }
         statementPasswords = secure.statementPw?.let {
             runCatching { Gson().fromJson<Map<String, String>>(it, mapType) }.getOrNull()
         } ?: emptyMap()
+        // Last good rates, so a cold start offline still converts (only when the base matches).
+        store.fxJson?.let { j -> runCatching { Gson().fromJson(j, FxResponse::class.java) }.getOrNull()?.let { if (it.base != null && it.rates != null) { fx = it.rates; fxBase = it.base } } }
         budget = store.budget
         goals = store.goals
         ready = true
@@ -78,8 +84,10 @@ object Repo {
     /** True only for the callback of a login this app started; the nonce is single-use. */
     fun consumeLoginState(s: String?): Boolean {
         val want = secure.pendingLoginState ?: return false
-        secure.pendingLoginState = null
-        return s != null && java.security.MessageDigest.isEqual(want.toByteArray(), s.toByteArray())
+        val ok = s != null && java.security.MessageDigest.isEqual(want.toByteArray(), s.toByteArray())
+        // Clear only on a match: a stray or forged callback must not cancel the login in progress.
+        if (ok) secure.pendingLoginState = null
+        return ok
     }
 
     private fun expireSession() {
@@ -103,24 +111,40 @@ object Repo {
         loading = true; error = null
         try {
             val api = Net.api(secure)
-            fx = runCatching { api.fx(mainCcy).rates }.getOrNull() ?: emptyMap()
+            val base = mainCcy
+            val rates = runCatching { api.fx(base).rates }.getOrNull()
+            if (!rates.isNullOrEmpty() && base == mainCcy) { fx = rates; fxBase = base; store.fxJson = Gson().toJson(FxResponse(base, rates)) }
             // Check the session first: a 401 here means sign in again, not "no data".
             val data = try { api.data() } catch (e: retrofit2.HttpException) {
                 if (e.code() == 401) { expireSession(); return }
                 null
             } catch (e: Exception) { null }
             data?.profile?.let { profile = it }
-            transactions = runCatching { api.sync(secure.refreshToken).data?.transactions }.getOrNull() ?: emptyList()
-            stmtAccounts = (runCatching { api.statements(secure.refreshToken, pwHeader()).accounts }.getOrNull() ?: emptyList()).filter { it.error == null }
+            // Keep what we had when a call fails (timeout, 429, offline) instead of blanking it.
+            quiet { api.sync(secure.refreshToken).data?.transactions }?.let { transactions = it }
+            quiet { api.statements(secure.refreshToken, pwHeader()).accounts }?.let { stmtAccounts = it.filter { a -> a.error == null } }
             if (holdings.isNotEmpty()) {
-                holdings = holdings.map { h ->
-                    val q = runCatching { api.quote(h.symbol) }.getOrNull()
-                    if (q?.price != null) h.copy(price = q.price, ccy = q.currency ?: h.ccy) else h
-                }
+                val quotes = holdings.map { it.symbol }.distinct().associateWith { sym -> quiet { api.quote(sym) } }
+                // Merge into the current list (it may have changed while quotes loaded), not a snapshot.
+                holdings = holdings.map { h -> quotes[h.symbol]?.takeIf { it.price != null }?.let { q -> withQuote(h, q.price!!, q.currency) } ?: h }
                 store.holdings = holdings
             }
+        } catch (e: kotlin.coroutines.cancellation.CancellationException) { throw e
         } catch (e: Exception) { error = e.message ?: "Sync failed" }
         finally { loading = false }
+    }
+
+    /** runCatching that does not swallow coroutine cancellation (e.g. logging out mid-refresh). */
+    private inline fun <T> quiet(block: () -> T): T? = try { block() }
+        catch (e: kotlin.coroutines.cancellation.CancellationException) { throw e }
+        catch (e: Exception) { null }
+
+    /** Yahoo quotes some markets in minor units (GBp pence, ZAc cents, ILA agorot). */
+    private fun withQuote(h: Holding, price: Double, ccy: String?): Holding = when (ccy) {
+        "GBp", "GBX" -> h.copy(price = price / 100, ccy = "GBP")
+        "ZAc" -> h.copy(price = price / 100, ccy = "ZAR")
+        "ILA" -> h.copy(price = price / 100, ccy = "ILS")
+        else -> h.copy(price = price, ccy = ccy ?: h.ccy)
     }
 
     suspend fun discover() {
@@ -159,10 +183,23 @@ object Repo {
         "JPY" to "¥", "AUD" to "A$", "MYR" to "RM", "CNY" to "CN¥", "HKD" to "HK$", "THB" to "฿"
     )
 
+    /** Rate for 1 [mainCcy] in [c], or null when unknown (no rates yet, or rates for another base). */
+    private fun rate(c: String): Double? = if (fxBase == mainCcy) fx[c]?.takeIf { it > 0.0 && it.isFinite() } else null
+
+    /** True when some balance can't be converted yet; totals then leave it out instead of adding it 1:1. */
+    val fxMissing: Boolean
+        get() = (accounts.map { it.ccy } + holdings.map { it.ccy } + allStmt.map { it.ccy ?: "IDR" } +
+            (if (transactions.isNotEmpty() || manualTx.isNotEmpty()) listOf("IDR") else emptyList()) + manualTx.map { it.ccy })
+            .any { it != mainCcy && rate(it) == null }
+
+    /** True when [from] can be shown in the main currency right now. */
+    fun canConv(from: String?): Boolean = (from ?: mainCcy) == mainCcy || rate(from!!) != null
+
     fun conv(amount: Double, from: String?): Double {
         val f = from ?: mainCcy
         if (f == mainCcy) return amount
-        val r = fx[f]
+        // Unknown rate: count nothing rather than treating rupiah as dollars (fxMissing tells the UI).
+        val r = rate(f) ?: return 0.0
         return if (r != null && r != 0.0) amount / r else amount
     }
 
@@ -183,7 +220,8 @@ object Repo {
 
     // ---- totals ----
     val cashTotal: Double
-        get() = accounts.sumOf { conv(it.bal, it.ccy) } +
+        // A manual credit card is money owed, whatever sign was typed.
+        get() = accounts.sumOf { conv(if (it.type == "credit_card") -abs(it.bal) else it.bal, it.ccy) } +
             allStmt.filter { it.type in listOf("savings", "bank", "cash", "deposit") }.sumOf { conv(it.balance ?: 0.0, it.ccy ?: "IDR") }
     val investTotal: Double
         get() = holdings.sumOf { conv(it.units * it.price, it.ccy) } +
@@ -196,7 +234,7 @@ object Repo {
         get() {
             val stmtTx = allStmt.flatMap { it.txns ?: emptyList() }
             // Feed rows are rendered as IDR; manual entries are stored in their own ccy.
-            val toIdr = if (mainCcy == "IDR") 1.0 else fx["IDR"] ?: 1.0
+            val toIdr = if (mainCcy == "IDR") 1.0 else rate("IDR") ?: 0.0
             val manual = manualTx.map { Txn(it.date, -abs(conv(it.amount, it.ccy)) * toIdr, it.merchant, "Manual", "spend", null, "manual") }
             return (transactions + stmtTx + manual).sortedByDescending { it.date ?: "" }
         }
@@ -276,6 +314,7 @@ object Repo {
 
     fun setCcy(c: String) { mainCcy = c; store.mainCcy = c }
     fun changeLang(l: String) { lang = l; store.lang = l }
+    fun chooseTheme(t: String) { theme = t; store.theme = t }
     fun toggleHide() { hideAmounts = !hideAmounts; store.hideAmounts = hideAmounts }
     fun saveBudget(b: Budget) { budget = b; store.budget = b }
     fun addGoal(g: Goal) { goals = goals + g; store.goals = goals }
@@ -291,5 +330,7 @@ object Repo {
         discoveredBanks = emptyList(); statementPasswords = emptyMap()
         budget = Budget(); goals = emptyList()
         mainCcy = "IDR"; lang = "en"; hideAmounts = false
+        fx = emptyMap(); fxBase = ""
+        store.theme = theme // a display preference, not personal data: keep it across sign-out
     }
 }

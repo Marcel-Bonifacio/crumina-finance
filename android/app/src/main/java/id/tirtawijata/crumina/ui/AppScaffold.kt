@@ -34,6 +34,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -68,6 +70,8 @@ fun AppScaffold(onLogout: () -> Unit, startTab: Tab = Tab.Overview, autoRefresh:
     StatusBarIcons(lightBackground = !LocalCr.current.dark)
     // One scroll position per tab, so switching tabs opens each page where you left it.
     val scroll = key(tab) { rememberScrollState() }
+    // Derived, so scrolling recomposes only when it crosses 0, not on every frame.
+    val scrolled by remember(scroll) { derivedStateOf { scroll.value > 0 } }
     AppBackground {
         // Every tab scrolls as one page under the floating bar, like the web layout.
         Column(
@@ -86,7 +90,7 @@ fun AppScaffold(onLogout: () -> Unit, startTab: Tab = Tab.Overview, autoRefresh:
             Spacer(Modifier.windowInsetsPadding(WindowInsets.navigationBars).height(104.dp))
         }
         // Keep the status bar readable once content scrolls under it.
-        Box(Modifier.align(Alignment.TopCenter).fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(LocalCr.current.bg.copy(alpha = if (scroll.value > 0) 0.96f else 0f)))
+        Box(Modifier.align(Alignment.TopCenter).fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(LocalCr.current.bg.copy(alpha = if (scrolled) 0.96f else 0f)))
         Box(Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.navigationBars).padding(start = 14.dp, end = 14.dp, bottom = 12.dp)) {
             BottomNav(tab) { tab = it }
         }

@@ -1,6 +1,5 @@
 package id.tirtawijata.crumina.ui
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -30,17 +29,23 @@ data class CrColors(
     val muted: Color,
     val line: Color,
     val btn: Color,
-    val dark: Boolean
-) {
-    val teal = Color(0xFF16C7A8)
-    val green = Color(0xFF13B97A)
-    val red = Color(0xFFF0476A)
-    val gold = Color(0xFFF6B73C)
-}
+    val dark: Boolean,
+    /** High contrast ([data-theme="contrast"] on the web): black lines and darker accents. */
+    val contrast: Boolean = false,
+    val teal: Color = Color(0xFF16C7A8),
+    val green: Color = Color(0xFF13B97A),
+    val red: Color = Color(0xFFF0476A),
+    val gold: Color = Color(0xFFF6B73C)
+)
 
 val LightCr = CrColors(
     bg = Color(0xFFEEF1F8), card = Color.White, ink = Color(0xFF0A1B3D), muted = Color(0xFF6B7A99),
     line = Color(0xFFE7EBF3), btn = Color(0xFF0A1B3D), dark = false
+)
+val ContrastCr = CrColors(
+    bg = Color.White, card = Color.White, ink = Color.Black, muted = Color(0xFF33414F),
+    line = Color.Black, btn = Color.Black, dark = false, contrast = true,
+    teal = Color(0xFF005EA6), green = Color(0xFF006B3C), red = Color(0xFFC00000), gold = Color(0xFF7A4F00)
 )
 val DarkCr = CrColors(
     bg = Color(0xFF0A0F1C), card = Color(0xFF141E33), ink = Color(0xFFE8EEFA), muted = Color(0xFF9AA9C6),
@@ -76,7 +81,8 @@ private fun Typography.withFont(f: FontFamily): Typography {
 
 @Composable
 fun CruminaTheme(content: @Composable () -> Unit) {
-    val cr = if (isSystemInDarkTheme()) DarkCr else LightCr
+    // Light unless the user picks Dark or High contrast in Settings (not the system theme).
+    val cr = when (id.tirtawijata.crumina.data.Repo.theme) { "dark" -> DarkCr; "contrast" -> ContrastCr; else -> LightCr }
     // Material components (dialogs, text fields, chips, switches) pick these up.
     val scheme = if (cr.dark) darkColorScheme(
         primary = cr.btn, onPrimary = Color.White, secondary = cr.teal, background = cr.bg, onBackground = cr.ink,

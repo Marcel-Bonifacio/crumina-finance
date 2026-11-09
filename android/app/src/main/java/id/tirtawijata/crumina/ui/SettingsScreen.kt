@@ -71,6 +71,10 @@ fun SettingsScreen(onLogout: () -> Unit, onSync: () -> Unit) {
         SettingRow(r.t("language"), r.t("language_sub")) {
             Picker(if (r.lang == "id") "Bahasa Indonesia" else "English", listOf("English", "Bahasa Indonesia")) { r.changeLang(if (it == "English") "en" else "id") }
         }
+        SettingRow(r.t("appearance"), r.t("appearance_sub")) {
+            val names = listOf("light" to r.t("th_light"), "dark" to r.t("th_dark"), "contrast" to r.t("th_contrast"))
+            Picker(names.first { it.first == r.theme }.second, names.map { it.second }) { picked -> r.chooseTheme(names.first { it.second == picked }.first) }
+        }
         SettingRow(r.t("hide_amounts"), r.t("hide_sub")) {
             Switch(checked = r.hideAmounts, onCheckedChange = { r.toggleHide() },
                 colors = SwitchDefaults.colors(checkedTrackColor = cr.teal, checkedThumbColor = Color.White))
@@ -81,6 +85,11 @@ fun SettingsScreen(onLogout: () -> Unit, onSync: () -> Unit) {
     SectionLabel(r.t("sec_data"))
     CrCard {
         SettingRow(r.t("statement_unlock"), r.t("stmt_unlock_sub"), first = true, onClick = { showUnlock = true }) { Chevron() }
+        val ctx = androidx.compose.ui.platform.LocalContext.current
+        val scope = rememberCoroutineScope()
+        var checked by remember { mutableStateOf(false) }
+        SettingRow(r.t("check_updates"), if (checked && id.tirtawijata.crumina.data.Updater.available == null) r.t("up_to_date") else String.format(r.t("check_updates_sub"), id.tirtawijata.crumina.BuildConfig.VERSION_NAME),
+            onClick = { scope.launch { id.tirtawijata.crumina.data.Updater.dismissedTag = null; id.tirtawijata.crumina.data.Updater.check(ctx.applicationContext, force = true); checked = true } }) { Chevron() }
         SettingRow(if (r.loading) r.t("syncing") else r.t("sync"), r.t("sync_sub"), onClick = if (r.loading) null else onSync) { Chevron() }
     }
     Spacer(Modifier.height(18.dp))

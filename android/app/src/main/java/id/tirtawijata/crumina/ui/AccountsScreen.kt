@@ -47,11 +47,18 @@ fun AccountsScreen() {
     var showAdd by remember { mutableStateOf(false) }
     val pdfPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) scope.launch {
+            // The server accepts up to 4 MB; read at most one byte more so a huge file can't OOM the app,
+            // and a cloud file that can't be opened (offline, revoked) shows an error instead of crashing.
             val b64 = withContext(Dispatchers.IO) {
-                ctx.contentResolver.openInputStream(uri)?.readBytes()
-                    ?.let { android.util.Base64.encodeToString(it, android.util.Base64.NO_WRAP) }
+                runCatching {
+                    ctx.contentResolver.openInputStream(uri)?.use { s ->
+                        val max = 4 * 1024 * 1024
+                        val bytes = s.readNBytesCompat(max + 1)
+                        if (bytes.size > max) null else android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                    }
+                }.getOrNull()
             }
-            if (b64 != null) r.upload(b64, null)
+            if (b64 != null) r.upload(b64, null) else r.error = r.t("pdf_too_big")
         }
     }
     val stmt = r.allStmt
@@ -100,7 +107,7 @@ fun AddAccountDialog(onDismiss: () -> Unit, onSave: (Account) -> Unit) {
         confirmButton = {
             TextButton(
                 enabled = name.isNotBlank(),
-                onClick = { onSave(Account(name.trim(), type.trim().ifBlank { "cash" }, ccy.trim().ifBlank { "IDR" }.uppercase(), bal.toDoubleOrNull() ?: 0.0)) }
+                onClick = { onSave(Account(name.trim(), type.trim().ifBlank { "cash" }, ccy.trim().ifBlank { "IDR" }.uppercase(), id.tirtawijata.crumina.data.Num.parse(bal) ?: 0.0)) }
             ) { Text(r.t("save")) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(r.t("cancel")) } },
@@ -114,4 +121,15 @@ fun AddAccountDialog(onDismiss: () -> Unit, onSave: (Account) -> Unit) {
             }
         }
     )
+}
+
+private fun java.io.InputStream.readNBytesCompat(n: Int): ByteArray {
+    val out = java.io.ByteArrayOutputStream()
+    val buf = ByteArray(64 * 1024)
+    while (out.size() < n) {
+        val k = read(buf, 0, minOf(buf.size, n - out.size()))
+        if (k < 0) break
+        out.write(buf, 0, k)
+    }
+    return out.toByteArray()
 }

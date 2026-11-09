@@ -63,6 +63,10 @@ fun OverviewScreen(onSync: () -> Unit, go: (Tab) -> Unit) {
             HeroAction(r.t("q_holdings")) { addHolding = true }
         }
     }
+    if (r.fxMissing) {
+        Spacer(Modifier.height(10.dp))
+        Muted(r.t("fx_missing"), modifier = Modifier.fillMaxWidth())
+    }
     r.error?.let {
         Spacer(Modifier.height(10.dp))
         Muted(it, modifier = Modifier.fillMaxWidth())

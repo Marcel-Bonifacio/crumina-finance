@@ -31,6 +31,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) handleIntent(intent)
         setContent {
             CruminaTheme {
+                id.tirtawijata.crumina.ui.UpdatePrompt()
                 if (loggedIn.value && !Repo.sessionExpired) {
                     AppScaffold(onLogout = { Repo.logout(); loggedIn.value = false })
                 } else {
@@ -55,12 +56,16 @@ class MainActivity : ComponentActivity() {
         // Activity is relaunched, so clear it in place and keep it as the current intent.
         intent.setData(null)
         setIntent(intent)
-        Repo.setSession(tokens.session, tokens.refreshToken)
-        tokens.profile?.let { p ->
-            runCatching {
-                String(Base64.decode(p, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP))
-            }.getOrNull()?.let { Repo.saveProfile(it) }
+        val profileJson = tokens.profile?.let { p ->
+            runCatching { String(Base64.decode(p, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)) }.getOrNull()
         }
+        // A different Google account signing in (e.g. after the session expired on a shared phone)
+        // must not inherit the previous person's accounts, statements or statement passwords.
+        val newEmail = profileJson?.let { runCatching { org.json.JSONObject(it).optString("email") }.getOrNull() }
+        val oldEmail = Repo.profile?.email
+        if (!oldEmail.isNullOrBlank() && !newEmail.isNullOrBlank() && !oldEmail.equals(newEmail, ignoreCase = true)) Repo.logout()
+        Repo.setSession(tokens.session, tokens.refreshToken)
+        profileJson?.let { Repo.saveProfile(it) }
         loggedIn.value = true
     }
 }

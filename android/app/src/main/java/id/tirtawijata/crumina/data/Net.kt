@@ -13,6 +13,12 @@ object Net {
 
     private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
+            // /api/statements reads mail and parses PDFs for each bank; Vercel allows 30 s per call.
+            .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(45, java.util.concurrent.TimeUnit.SECONDS)
+            .callTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            // The API never redirects. Refusing to follow keeps X-Cr-Rt / X-Cr-Pw from following one.
+            .followRedirects(false).followSslRedirects(false)
             .addInterceptor(Interceptor { chain ->
                 val b = chain.request().newBuilder()
                 store?.session?.let { b.header("Authorization", "Bearer $it") }

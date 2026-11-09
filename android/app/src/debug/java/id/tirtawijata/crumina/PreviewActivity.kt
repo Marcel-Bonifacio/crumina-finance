@@ -42,6 +42,7 @@ class PreviewActivity : ComponentActivity() {
         val d = { n: Long -> LocalDate.now().minusDays(n).toString() }
         Repo.profile = Profile(email = "marcel@example.com", name = "Marcel Example")
         Repo.fx = mapOf("IDR" to 1.0, "USD" to 1 / 16300.0)
+        Repo.fxBase = "IDR"
         Repo.accounts = listOf(
             Account("BCA Tahapan", "savings", "IDR", 42_500_000.0),
             Account("Wise USD", "savings", "USD", 1_250.0),

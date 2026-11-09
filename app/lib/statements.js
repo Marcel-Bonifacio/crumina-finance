@@ -15,7 +15,7 @@ async function readStatements(mbox, pwMap){
     try{
       const refs=await mbox.search(Object.assign({max:3}, ad.match)); if(!refs.length) continue;
       let pdf=null;
-      for(const r of refs){ const msg=await mbox.fetch(r.uid,{attachments:true}); const f=(msg.attachments||[]).find(a=>((a.filename||'').toLowerCase().endsWith('.pdf'))||a.mimeType==='application/pdf'); if(f){ pdf=f; break; } }
+      for(const r of refs){ const msg=await mbox.fetch(r.uid,{attachments:true}); if(msg.spoofed) continue; const f=(msg.attachments||[]).find(a=>((a.filename||'').toLowerCase().endsWith('.pdf'))||a.mimeType==='application/pdf'); if(f){ pdf=f; break; } }
       if(!pdf) continue;
       const text=await extractText(pdf.data, pw||undefined);
       const txns=parseStatementTxns(text);

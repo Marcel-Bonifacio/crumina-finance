@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
       const ok = { EQUITY:1, ETF:1, MUTUALFUND:1, CRYPTOCURRENCY:1, INDEX:1, CURRENCY:1, FUTURE:1 };
       const out = (j.quotes || []).filter(x => x.symbol && ok[x.quoteType]).slice(0, 8)
         .map(x => ({ symbol: x.symbol, name: x.longname || x.shortname || x.symbol, exch: x.exchDisp || x.exchange || '', type: x.quoteType }));
-      res.setHeader('Cache-Control', 'public, max-age=120');
+      res.setHeader('Cache-Control', 'private, max-age=120'); // behind auth: browser cache only, never a shared CDN
       return res.end(JSON.stringify({ quotes: out }));
     }
     if (symbol) {
@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
       const cl = (R.indicators && R.indicators.quote && R.indicators.quote[0] && R.indicators.quote[0].close) || [];
       const history = [];
       for (let i = 0; i < ts.length; i++) if (cl[i] != null) history.push([ts[i] * 1000, +(+cl[i]).toFixed(4)]);
-      res.setHeader('Cache-Control', 'public, max-age=300');
+      res.setHeader('Cache-Control', 'private, max-age=300');
       return res.end(JSON.stringify({ symbol: m.symbol, price: m.regularMarketPrice, currency: m.currency || 'USD', name: m.longName || m.shortName || m.symbol, exch: m.fullExchangeName || m.exchangeName || '', history: history }));
     }
     res.statusCode = 400; res.end('{"error":"q_or_symbol_required"}');

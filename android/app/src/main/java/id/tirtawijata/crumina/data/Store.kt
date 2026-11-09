@@ -12,13 +12,11 @@ class Store(context: Context) {
     private val accType = TypeToken.getParameterized(List::class.java, Account::class.java).type
     private val holdType = TypeToken.getParameterized(List::class.java, Holding::class.java).type
 
-    private val prefs = EncryptedSharedPreferences.create(
-        context,
-        "crumina_app",
-        MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    private val prefs = encryptedPrefs(context, "crumina_app")
+
+    var fxJson: String?
+        get() = prefs.getString("fx", null)
+        set(v) { prefs.edit().apply { if (v == null) remove("fx") else putString("fx", v) }.apply() }
 
     var mainCcy: String
         get() = prefs.getString("ccy", "IDR") ?: "IDR"
@@ -28,6 +26,9 @@ class Store(context: Context) {
         get() = prefs.getString("lang", "en") ?: "en"
         set(v) { prefs.edit().putString("lang", v).apply() }
 
+    var theme: String
+        get() = prefs.getString("theme", "light") ?: "light"
+        set(v) { prefs.edit().putString("theme", v).apply() }
     var hideAmounts: Boolean
         get() = prefs.getBoolean("hide", false)
         set(v) { prefs.edit().putBoolean("hide", v).apply() }
@@ -72,4 +73,22 @@ class Store(context: Context) {
         set(v) { prefs.edit().putString("uploaded", gson.toJson(v)).apply() }
 
     fun clear() = prefs.edit().clear().apply()
+}
+
+/**
+ * EncryptedSharedPreferences that recovers instead of crash-looping: some devices' keystores lose or
+ * corrupt the master key (OEM bugs, restore to a new device), and then every launch would throw.
+ * The unreadable file is deleted and recreated, which signs the user out but keeps the app usable.
+ */
+fun encryptedPrefs(context: Context, name: String): android.content.SharedPreferences {
+    fun open() = EncryptedSharedPreferences.create(
+        context, name,
+        MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
+    return try { open() } catch (e: Exception) {
+        context.deleteSharedPreferences(name)
+        open()
+    }
 }
