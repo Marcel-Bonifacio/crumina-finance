@@ -9,8 +9,8 @@ import com.google.gson.reflect.TypeToken
 /** Encrypted local store for app data (accounts, holdings, settings, cached profile). */
 class Store(context: Context) {
     private val gson = Gson()
-    private val accType = object : TypeToken<List<Account>>() {}.type
-    private val holdType = object : TypeToken<List<Holding>>() {}.type
+    private val accType = TypeToken.getParameterized(List::class.java, Account::class.java).type
+    private val holdType = TypeToken.getParameterized(List::class.java, Holding::class.java).type
 
     private val prefs = EncryptedSharedPreferences.create(
         context,
@@ -54,19 +54,19 @@ class Store(context: Context) {
         } ?: Budget()
         set(v) { prefs.edit().putString("budget", gson.toJson(v)).apply() }
 
-    private val goalType = object : TypeToken<List<Goal>>() {}.type
+    private val goalType = TypeToken.getParameterized(List::class.java, Goal::class.java).type
     var goals: List<Goal>
         get() = prefs.getString("goals", null)?.let {
             runCatching { gson.fromJson<List<Goal>>(it, goalType) }.getOrNull()
         } ?: emptyList()
         set(v) { prefs.edit().putString("goals", gson.toJson(v)).apply() }
 
-    private val manualType = object : TypeToken<List<ManualTx>>() {}.type
+    private val manualType = TypeToken.getParameterized(List::class.java, ManualTx::class.java).type
     var manualTx: List<ManualTx>
         get() = prefs.getString("manualtx", null)?.let { runCatching { gson.fromJson<List<ManualTx>>(it, manualType) }.getOrNull() } ?: emptyList()
         set(v) { prefs.edit().putString("manualtx", gson.toJson(v)).apply() }
 
-    private val stmtListType = object : TypeToken<List<StmtAccount>>() {}.type
+    private val stmtListType = TypeToken.getParameterized(List::class.java, StmtAccount::class.java).type
     var uploadedAccounts: List<StmtAccount>
         get() = prefs.getString("uploaded", null)?.let { runCatching { gson.fromJson<List<StmtAccount>>(it, stmtListType) }.getOrNull() } ?: emptyList()
         set(v) { prefs.edit().putString("uploaded", gson.toJson(v)).apply() }
