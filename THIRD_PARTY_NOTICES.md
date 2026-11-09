@@ -1,6 +1,6 @@
 # Third-party notices
 
-Crumina is free software licensed under the GNU Affero General Public License v3.0;
+Crumina is free software licensed under the Apache License 2.0;
 see [LICENSE](LICENSE). It includes, depends on, or connects to the third-party
 components and services listed below. Each of them is used under its own licence or
 terms, and Crumina's licence does not change those terms.
@@ -17,7 +17,7 @@ Contents:
 4. [Fonts](#4-fonts)
 5. [External services and data](#5-external-services-and-data)
 6. [Trademarks](#6-trademarks)
-7. [Pending owner decision: Google ML Kit in the AGPL-3.0 Android app](#7-pending-owner-decision-google-ml-kit-in-the-agpl-30-android-app)
+7. [Google ML Kit in the Android app](#7-google-ml-kit-in-the-android-app)
 
 ## 1. Web app: files served to the browser
 
@@ -98,8 +98,8 @@ Direct dependencies:
 | Package | Version | Licence |
 |---|---|---|
 | pdfjs-dist | 4.10.38 | Apache-2.0 |
-| imapflow | 1.4.2 | MIT |
-| mailparser | 3.9.11 | MIT |
+| imapflow | 1.7.8 | MIT |
+| mailparser | 3.14.2 | MIT |
 
 Transitive dependencies:
 
@@ -108,26 +108,26 @@ Transitive dependencies:
 | @napi-rs/canvas, and the one platform build of it that npm installs (optional dependency of pdfjs-dist) | 0.1.100 | MIT |
 | @pinojs/redact | 0.4.0 | MIT |
 | @selderee/plugin-htmlparser2 | 0.12.0 | MIT |
-| @zone-eu/mailsplit | 5.4.12 | MIT OR EUPL-1.1+ (used under MIT) |
+| @zone-eu/mailsplit | 5.4.16 and 5.4.30 | MIT OR EUPL-1.1+ (used under MIT) |
 | atomic-sleep | 1.0.0 | MIT |
-| deepmerge-ts | 7.1.5 | BSD-3-Clause |
+| deepmerge-ts | 8.0.2 | BSD-3-Clause |
 | dom-serializer | 2.0.0 | MIT |
 | domelementtype | 2.3.0 | BSD-2-Clause |
 | domhandler | 5.0.3 | BSD-2-Clause |
 | domutils | 3.2.2 | BSD-2-Clause |
-| encoding-japanese | 2.2.0 | MIT |
+| encoding-japanese | 2.3.0 and 2.5.0 | MIT |
 | entities | 4.5.0 and 7.0.1 | BSD-2-Clause |
 | he | 1.2.0 | MIT |
-| html-to-text | 10.0.0 | MIT |
+| html-to-text | 10.0.1 | MIT |
 | htmlparser2 | 10.1.0 | MIT |
-| iconv-lite | 0.7.2 | MIT |
-| ip-address | 10.2.0 | MIT |
+| iconv-lite | 0.7.3 | MIT |
+| ip-address | 10.7.6 | MIT |
 | leac | 0.7.0 | MIT |
-| libbase64 | 1.3.0 | MIT |
-| libmime | 5.3.8 | MIT |
-| libqp | 2.1.1 | MIT |
-| linkify-it | 5.0.1 | MIT |
-| nodemailer | 9.0.1 | MIT-0 |
+| libbase64 | 1.3.0 and 1.4.1 | MIT |
+| libmime | 5.4.3 and 5.6.4 | MIT |
+| libqp | 2.1.1 and 3.0.1 | MIT |
+| linkify-it | 5.0.2 | MIT |
+| nodemailer | 10.3.1 | MIT-0 |
 | on-exit-leak-free | 2.1.2 | MIT |
 | parseley | 0.13.1 | MIT |
 | peberminta | 0.10.0 | MIT |
@@ -194,66 +194,19 @@ are trademarks of Google LLC. Yahoo is a trademark of Yahoo. Bank and card names
 trademarks of their owners. They are used only to identify the services Crumina works
 with; Crumina is not affiliated with or endorsed by any of them.
 
-## 7. Pending owner decision: Google ML Kit in the AGPL-3.0 Android app
+## 7. Google ML Kit in the Android app
 
-**Status: not adopted.** Only the copyright holder, Marcel-Bonifacio, can adopt the
-additional permission drafted below. Until that happens, [LICENSE](LICENSE) (plain
-AGPL-3.0, with no additional permissions) is the only licence for Crumina's own code,
-and nothing in this section grants any permission.
+The Android app links `com.google.mlkit:text-recognition:16.0.1`, used in
+`android/app/src/main/java/id/tirtawijata/crumina/data/Ocr.kt`. ML Kit and the Google
+Play services libraries it depends on are proprietary and are used under the
+[ML Kit Terms of Service](https://developers.google.com/ml-kit/terms) and the Google APIs
+Terms of Service.
 
-### The issue
-
-- The Android app links `com.google.mlkit:text-recognition:16.0.1`, used in
-  `android/app/src/main/java/id/tirtawijata/crumina/data/Ocr.kt`. ML Kit and the Google
-  Play services libraries it depends on are proprietary. They are licensed under the ML
-  Kit Terms of Service, which forbid reverse engineering or extracting their source, and
-  the Google APIs Terms of Service.
-- AGPL-3.0 section 6 requires anyone who conveys the APK to provide its Corresponding
-  Source, which section 1 defines to include libraries the program is designed to link
-  with, apart from System Libraries. ML Kit is bundled inside the APK, so it is not a
-  System Library, and its source is not available.
-- The copyright holder can still publish the APK, because the AGPL's conditions bind
-  licensees, not the licensor. Anyone else who redistributes the APK, or a build of a
-  fork (a mirror, an F-Droid packager, a fork's own release), cannot meet section 6 and
-  so has no right to convey it. F-Droid would also reject the app as non-free.
-- All 27 commits in the repository are by the owner, so the owner alone can still add an
-  exception. Once someone else's contribution is merged under plain AGPL-3.0, adding it
-  would also need that contributor's agreement.
-
-### Options
-
-- **A. Keep ML Kit and add a linking exception** under AGPL-3.0 section 7, using the
-  draft below.
-- **B. Replace ML Kit** in `Ocr.kt` with an open-source on-device OCR engine, for
-  example Tesseract4Android (Apache-2.0), which can reuse the `eng` and `ind` traineddata
-  already in `app/vendor/tesseract`. No exception is then needed, the APK becomes fully
-  free software, and the ML Kit metrics disclosure in the privacy policy can be removed.
-
-### Draft additional permission (for option A)
-
-This follows the Free Software Foundation's template for a GPLv3 section 7 linking
-exception. The template's optional last sentence, which says the Corresponding Source
-shall include the library's source code, is left out because ML Kit's source is not
-available.
-
-> **Additional permission under GNU AGPL version 3 section 7**
->
-> If you modify this Program, or any covered work, by linking or combining it with the
-> Google ML Kit libraries (Maven group `com.google.mlkit`) and the Google Play services,
-> Firebase and Android data transport client libraries that they depend on (Maven groups
-> `com.google.android.gms`, `com.google.firebase` and `com.google.android.datatransport`),
-> or modified versions of those libraries, containing parts covered by the terms of the
-> ML Kit Terms of Service or the Google APIs Terms of Service, the licensors of this
-> Program grant you additional permission to convey the resulting work.
-
-### How to adopt it
-
-1. Put the text above, with a copyright line naming the copyright holder, in a new
-   top-level file such as `LICENSE-EXCEPTION.md`. Do not edit `LICENSE`: the AGPL text
-   itself may not be changed.
-2. Refer to that file from the License section of `README.md`, and change
-   `CONTRIBUTING.md` so that contributions are made under AGPL-3.0 together with this
-   additional permission.
-3. Optionally mention the exception next to `"license": "AGPL-3.0-only"` in
-   `app/package.json`. The web app does not use ML Kit, so this is informational only.
-4. Mark this section as adopted, or remove it and point to the new file.
+Crumina's own code is under the Apache License 2.0, which places no source-code
+requirement on libraries it is combined with. Anyone may therefore build and
+redistribute the APK, provided they also follow Google's terms for the ML Kit parts. The
+APK as a whole is still not fully free software, so stores such as F-Droid would reject
+it. Replacing ML Kit in `Ocr.kt` with an open-source on-device OCR engine (for example
+Tesseract4Android, Apache-2.0, which can reuse the `eng` and `ind` traineddata already in
+`app/vendor/tesseract`) would remove that limit and the ML Kit metrics disclosure in the
+privacy policy.

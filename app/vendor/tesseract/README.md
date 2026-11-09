@@ -2,8 +2,8 @@
 
 The web app loads these files in the browser to read receipts on the user's device
 (`app/app.js`, `loadTesseract`). They are unmodified copies of the upstream releases
-listed below. They are not covered by Crumina's AGPL-3.0 licence: each keeps its own
-licence. Do not edit them; to update, replace them with the files of a new upstream
+listed below. Crumina's own Apache-2.0 licence does not replace
+theirs: each keeps its own licence. Do not edit them; to update, replace them with the files of a new upstream
 release, including its `*.LICENSE.txt` files, and update this table and
 [`THIRD_PARTY_NOTICES.md`](../../../THIRD_PARTY_NOTICES.md).
 

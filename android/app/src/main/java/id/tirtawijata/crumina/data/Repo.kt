@@ -44,6 +44,8 @@ object Repo {
 
     var loading by mutableStateOf(false)
     var error by mutableStateOf<String?>(null)
+    /** Server rejected the session (401). UI sends the user back to sign-in; local data is kept. */
+    var sessionExpired by mutableStateOf(false)
 
     fun init(context: Context) {
         if (ready) return
@@ -63,7 +65,29 @@ object Repo {
 
     val isLoggedIn: Boolean get() = ready && secure.isLoggedIn
 
+    /** Start a login: remember a fresh nonce that the callback has to return. */
+    fun newLoginState(): String {
+        val b = ByteArray(24); java.security.SecureRandom().nextBytes(b)
+        val s = b.joinToString("") { "%02x".format(it) }
+        secure.pendingLoginState = s
+        return s
+    }
+
+    /** True only for the callback of a login this app started; the nonce is single-use. */
+    fun consumeLoginState(s: String?): Boolean {
+        val want = secure.pendingLoginState ?: return false
+        secure.pendingLoginState = null
+        return s != null && java.security.MessageDigest.isEqual(want.toByteArray(), s.toByteArray())
+    }
+
+    private fun expireSession() {
+        secure.session = null
+        secure.refreshToken = null
+        sessionExpired = true
+    }
+
     fun setSession(token: String, refreshToken: String?) {
+        sessionExpired = false
         secure.session = token
         if (refreshToken != null) secure.refreshToken = refreshToken
     }
@@ -78,7 +102,12 @@ object Repo {
         try {
             val api = Net.api(secure)
             fx = runCatching { api.fx(mainCcy).rates }.getOrNull() ?: emptyMap()
-            runCatching { api.data().profile }.getOrNull()?.let { profile = it }
+            // Check the session first: a 401 here means sign in again, not "no data".
+            val data = try { api.data() } catch (e: retrofit2.HttpException) {
+                if (e.code() == 401) { expireSession(); return }
+                null
+            } catch (e: Exception) { null }
+            data?.profile?.let { profile = it }
             transactions = runCatching { api.sync(secure.refreshToken).data?.transactions }.getOrNull() ?: emptyList()
             stmtAccounts = (runCatching { api.statements(secure.refreshToken, pwHeader()).accounts }.getOrNull() ?: emptyList()).filter { it.error == null }
             if (holdings.isNotEmpty()) {
@@ -89,7 +118,7 @@ object Repo {
                 store.holdings = holdings
             }
         } catch (e: Exception) { error = e.message ?: "Sync failed" }
-        loading = false
+        finally { loading = false }
     }
 
     suspend fun discover() {
@@ -110,8 +139,10 @@ object Repo {
         loading = true; error = null
         try {
             val resp = Net.api(secure).upload(UploadReq(pdfBase64, password))
-            if (resp.ok && resp.accounts != null) {
-                uploadedAccounts = uploadedAccounts + resp.accounts.filter { it.error == null }
+            if (resp.ok && !resp.accounts.isNullOrEmpty()) {
+                // Re-uploading the same statement replaces it instead of double-counting.
+                val fresh = resp.accounts.filter { it.error == null }
+                uploadedAccounts = uploadedAccounts.filterNot { o -> fresh.any { it.institution == o.institution && it.name == o.name } } + fresh
                 store.uploadedAccounts = uploadedAccounts
             } else {
                 error = resp.error ?: resp.note ?: "Could not read PDF"
@@ -162,7 +193,9 @@ object Repo {
     val feed: List<Txn>
         get() {
             val stmtTx = allStmt.flatMap { it.txns ?: emptyList() }
-            val manual = manualTx.map { Txn(it.date, -abs(it.amount), it.merchant, "Manual", "spend", null, "manual") }
+            // Feed rows are rendered as IDR; manual entries are stored in their own ccy.
+            val toIdr = if (mainCcy == "IDR") 1.0 else fx["IDR"] ?: 1.0
+            val manual = manualTx.map { Txn(it.date, -abs(conv(it.amount, it.ccy)) * toIdr, it.merchant, "Manual", "spend", null, "manual") }
             return (transactions + stmtTx + manual).sortedByDescending { it.date ?: "" }
         }
 

@@ -15,7 +15,8 @@ data class Txn(
     val account: String? = null,
     @SerializedName("class") val cls: String? = null,
     val status: String? = null,
-    val source: String? = null
+    val source: String? = null,
+    val desc: String? = null
 )
 
 data class SyncData(

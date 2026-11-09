@@ -18,7 +18,7 @@ async function publicHost(host){
     return a.length > 0 && !a.some(function(x){ const ip = x.address.replace(/^::ffff:(?=\d+\.\d+\.\d+\.\d+$)/i, ''); return BLOCKED.check(ip, net.isIPv6(ip) ? 'ipv6' : 'ipv4'); });
   } catch (e) { return false; }
 }
-function readBody(req){ return new Promise(function(resolve){ var b=''; req.on('data',function(c){ b+=c; if(b.length>4096){ b=b.slice(0,4096); req.destroy(); } }); req.on('end',function(){ resolve(b); }); req.on('error',function(){ resolve(''); }); }); }
+function readBody(req){ return new Promise(function(resolve){ var b=''; req.on('data',function(c){ b+=c; if(b.length>4096){ b=b.slice(0,4096); req.destroy(); } }); req.on('end',function(){ resolve(b); }); req.on('close',function(){ resolve(b); }); req.on('error',function(){ resolve(''); }); }); }
 function back(res, code){ res.writeHead(302, { Location: '/login?imap=' + code }); res.end(); }
 module.exports = async (req, res) => {
   const q = require('url').parse(req.url, true).query || {};

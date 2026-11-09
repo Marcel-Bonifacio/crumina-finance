@@ -11,3 +11,6 @@ data
 .github
 android
 docs
+!**/.env.example
+*.log
+.DS_Store

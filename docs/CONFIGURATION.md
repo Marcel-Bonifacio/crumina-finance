@@ -75,9 +75,9 @@ a client can send its own header and dodge the per-IP limits. See
 
 ## Replace before you run a public instance
 
-Some values in the source belong to the maintainer's own deployment or are still
-placeholders. Replace them before you operate Crumina as a public service, both for
-correctness and to satisfy the AGPL's source-offer requirement.
+A few values still carry placeholder identity from the open-source template. Replace
+them before you operate Crumina as a public service, for correctness and so users
+know who operates the instance.
 
 | Where | Current value | Replace with |
 |---|---|---|
@@ -88,9 +88,7 @@ correctness and to satisfy the AGPL's source-offer requirement.
 | `app/.well-known/assetlinks.json` | package `id.tirtawijata.crumina` and its signing fingerprint | your package id and signing key, if you ship your own Android build |
 | `brand/`, `app/brand/` | the Crumina logo and icons | your own marks, if you rebrand |
 
-The repository link matters under the AGPL: if you modify Crumina and run it as a
-network service, you must offer users the source of your modified version, and the
-"view source" link in the app opens `REPO`.
+The "view source" link should point at the code you actually run.
 
 ## How the app discovers what is configured
 

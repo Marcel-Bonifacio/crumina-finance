@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
   try {
     const url = new URL(req.url, 'https://' + req.headers.host);
     const state = url.searchParams.get('state') || '', nonce = getCookie(req, 'oauth_state');
-    const [stateNonce, client] = state.split('.');
+    const [stateNonce, client, appState] = state.split('.');
     if (!stateNonce || !nonce || stateNonce !== nonce) { res.statusCode = 400; return res.end('Sign-in failed, please try again.'); }
     const code = url.searchParams.get('code'); if (!code) { res.statusCode = 400; return res.end('Sign-in failed.'); }
     const tok = await exchangeCode(code);
@@ -19,7 +19,8 @@ module.exports = async (req, res) => {
       // fragment (fragments are never sent to a server, never logged).
       res.setHeader('Set-Cookie', cookie('oauth_state', '', 0));
       const frag = 't=' + encodeURIComponent(sign(info.email)) + '&p=' + encodeURIComponent(prof)
-        + (tok.refresh_token ? '&rt=' + encodeURIComponent(encrypt(tok.refresh_token)) : '');
+        + (tok.refresh_token ? '&rt=' + encodeURIComponent(encrypt(tok.refresh_token)) : '')
+        + (appState ? '&s=' + encodeURIComponent(appState) : '');
       res.writeHead(302, { Location: APP_LINK + '#' + frag }); return res.end();
     }
     const cookies = [ cookie('tally_session', sign(info.email), 30*86400), cookie('tally_prof', prof, 30*86400), cookie('oauth_state', '', 0) ];

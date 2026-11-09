@@ -1,6 +1,6 @@
 # Self-hosting
 
-Crumina runs anywhere Node 18+ runs. The `selfhost/` folder contains a small server
+Crumina runs anywhere Node 20.19+ runs. The `selfhost/` folder contains a small server
 and ready-made deployment files, so you can put it on a VPS with Docker, run it under
 systemd, or drop it onto any platform that hosts a Node process. This guide leads
 with Docker because it is the least error-prone, then covers the alternatives.
@@ -12,8 +12,8 @@ edge middleware would otherwise do, and sets the same security headers.
 
 ## What you need
 
-- A host with Node 18 or newer (Node 18 is the floor because the server uses the
-  built-in `fetch`). A 1 vCPU / 1 GB machine is enough.
+- A host with Node 20.19 or newer (the mail and PDF dependencies require it;
+  Node 22 LTS recommended). A 1 vCPU / 1 GB machine is enough.
 - A domain name you control, if you want HTTPS and Google sign-in.
 - The two required secrets, `SESSION_SECRET` and `TOKEN_ENC_KEY` (see
   [CONFIGURATION.md](CONFIGURATION.md)).
@@ -87,8 +87,8 @@ sudo git clone https://github.com/Marcel-Bonifacio/crumina-finance.git /opt/crum
 sudo chown -R crumina:crumina /opt/crumina
 cd /opt/crumina
 
-# Node 18+ and the app's dependencies
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+# Node 22 LTS and the app's dependencies
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs
 sudo -u crumina bash -c 'cd app && npm ci --omit=dev'
 

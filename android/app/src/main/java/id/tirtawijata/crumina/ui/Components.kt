@@ -39,7 +39,7 @@ fun RowScope.StatCard(label: String, value: String) {
 fun TxRow(t: Txn) {
     Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
         Column(Modifier.weight(1f)) {
-            Text(t.merchant ?: "Transaction", style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+            Text(t.merchant ?: t.desc ?: "Transaction", style = MaterialTheme.typography.bodyMedium, maxLines = 1)
             Text(listOfNotNull(t.date, t.account).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = Muted)
         }
         Spacer(Modifier.width(8.dp))
