@@ -262,4 +262,4 @@ fun TrendSection() {
 }
 
 private fun monthLabel(ym: String): String =
-    runCatching { java.time.YearMonth.parse(ym).month.getDisplayName(java.time.format.TextStyle.SHORT, Locale.US) }.getOrNull() ?: ym.takeLast(2)
+    runCatching { java.time.YearMonth.parse(ym).month.getDisplayName(java.time.format.TextStyle.SHORT, uiLocale()) }.getOrNull() ?: ym.takeLast(2)

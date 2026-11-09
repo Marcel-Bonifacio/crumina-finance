@@ -30,6 +30,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -140,7 +141,8 @@ fun HeroLabel(text: String) = Text(
 
 @Composable
 fun HeroValue(text: String) = Text(
-    text, color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold,
+    // Step down for long amounts so they fit a narrow phone instead of being clipped.
+    text, color = Color.White, fontSize = if (text.length > 16) 24.sp else if (text.length > 13) 27.sp else 30.sp, fontWeight = FontWeight.ExtraBold,
     letterSpacing = (-1.2).sp, modifier = Modifier.padding(top = 8.dp), maxLines = 1
 )
 
@@ -284,11 +286,12 @@ fun ListRow(
     }
 }
 
-private val shortDate = java.time.format.DateTimeFormatter.ofPattern("d MMM", java.util.Locale.US)
+/** Locale for dates and month names, following the app language (Okt, Des in Indonesian). */
+fun uiLocale(): java.util.Locale = if (Repo.lang == "id") java.util.Locale("id") else java.util.Locale.US
 
 fun fmtShortDate(date: String?): String? {
     val d = date?.trim()?.take(10) ?: return null
-    return runCatching { java.time.LocalDate.parse(d).format(shortDate) }.getOrNull() ?: d
+    return runCatching { java.time.LocalDate.parse(d).format(java.time.format.DateTimeFormatter.ofPattern("d MMM", uiLocale())) }.getOrNull() ?: d
 }
 
 /** A transaction row as the web app draws it: "Account · 8 Nov · Category", signed coloured amount. */
@@ -332,7 +335,7 @@ fun RowScope.StatTile(label: String, value: String) {
 
 /** Thin rounded progress bar (`.barwrap`). */
 @Composable
-fun Bar(fraction: Float, color: Color) = BarBrush(fraction, Brush.linearGradient(listOf(color, color)))
+fun Bar(fraction: Float, color: Color) = BarBrush(fraction, SolidColor(color))
 
 @Composable
 fun BarBrush(fraction: Float, brush: Brush) {
@@ -408,4 +411,15 @@ fun CrField(
             focusedTextColor = cr.ink, unfocusedTextColor = cr.ink
         )
     )
+}
+
+/** Status bar icon colour for the current screen: dark icons on light pages, light on the navy login. */
+@Composable
+fun StatusBarIcons(lightBackground: Boolean) {
+    val view = androidx.compose.ui.platform.LocalView.current
+    if (view.isInEditMode) return
+    androidx.compose.runtime.SideEffect {
+        val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
+        androidx.core.view.WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = lightBackground
+    }
 }

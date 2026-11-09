@@ -46,6 +46,8 @@ import id.tirtawijata.crumina.data.ManualTx
 import id.tirtawijata.crumina.data.Ocr
 import id.tirtawijata.crumina.data.Repo
 
+private const val PAGE = 100
+
 @Composable
 fun ActivityScreen() {
     val r = Repo
@@ -77,14 +79,24 @@ fun ActivityScreen() {
             Chip(r.t(k), range == d) { range = d }
         }
     }
-    val today = java.time.LocalDate.now()
-    val feed = r.feed.filter { t ->
-        (query.isBlank() || (t.merchant ?: t.desc ?: "").contains(query.trim(), ignoreCase = true)) &&
-            (range < 0 || runCatching { java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.parse(t.date!!.take(10)), today) <= range }.getOrDefault(true))
+    val all = r.feed
+    val feed = remember(all, query, range) {
+        all.filter { t ->
+            (query.isBlank() || (t.merchant ?: t.desc ?: "").contains(query.trim(), ignoreCase = true)) &&
+                (range < 0 || r.daysAgo(t.date) <= range)
+        }
     }
+    // Render in pages: the list lives inside the page scroll, so it is not lazy.
+    var shown by remember(query, range) { mutableStateOf(PAGE) }
     CrCard {
         if (feed.isEmpty()) EmptyText(r.t("no_tx"))
-        feed.take(300).forEachIndexed { i, t -> TxRow(t, i == 0) }
+        feed.take(shown).forEachIndexed { i, t -> TxRow(t, i == 0) }
+        if (feed.size > shown) {
+            Spacer(Modifier.height(10.dp))
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                GhostButton(String.format(r.t("show_more"), feed.size - shown), { shown += PAGE })
+            }
+        }
     }
     if (showAdd) AddExpenseDialog(onDismiss = { showAdd = false })
 }

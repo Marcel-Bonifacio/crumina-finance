@@ -42,6 +42,7 @@ import id.tirtawijata.crumina.data.Repo
 @Composable
 fun LoginScreen(expired: Boolean, onLogin: () -> Unit) {
     val r = Repo
+    StatusBarIcons(lightBackground = false)
     Box(
         Modifier.fillMaxSize()
             .background(Brush.linearGradient(0f to Navy2, 0.72f to Navy, start = Offset(0f, 0f), end = Offset(1400f, 2400f)))

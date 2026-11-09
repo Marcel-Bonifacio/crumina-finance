@@ -204,7 +204,8 @@ object Repo {
     // ---- insights / budgets ----
     val budgetCategories = listOf("Food & Dining", "Groceries", "Transport", "Shopping", "Travel", "Bills & Subs")
 
-    private fun daysAgo(date: String?): Long {
+    /** Days since [date] (ISO, dd/MM/yyyy or MM/dd/yyyy); Long.MAX_VALUE when it cannot be read. */
+    fun daysAgo(date: String?): Long {
         val d = date?.trim()?.take(10) ?: return Long.MAX_VALUE
         val parsed = runCatching { java.time.LocalDate.parse(d) }.getOrNull()
             ?: runCatching { java.time.LocalDate.parse(d, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) }.getOrNull()

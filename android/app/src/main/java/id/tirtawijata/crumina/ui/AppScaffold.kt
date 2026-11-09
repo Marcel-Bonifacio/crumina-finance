@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -64,7 +65,9 @@ fun AppScaffold(onLogout: () -> Unit, startTab: Tab = Tab.Overview, autoRefresh:
     val scope = rememberCoroutineScope()
     if (autoRefresh) LaunchedEffect(Unit) { Repo.refresh() }
     val sync: () -> Unit = { scope.launch { Repo.refresh() } }
-    val scroll = rememberScrollState()
+    StatusBarIcons(lightBackground = !LocalCr.current.dark)
+    // One scroll position per tab, so switching tabs opens each page where you left it.
+    val scroll = key(tab) { rememberScrollState() }
     AppBackground {
         // Every tab scrolls as one page under the floating bar, like the web layout.
         Column(
