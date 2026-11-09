@@ -7,32 +7,33 @@
 <p align="center">Your money, all in one place, without handing it to anyone.</p>
 
 <p align="center">
+  <a href="https://github.com/Marcel-Bonifacio/crumina-finance/releases/latest/download/crumina.apk"><img alt="Download for Android" src="https://img.shields.io/badge/Download-Android%20APK-2FE0C2?style=for-the-badge&logo=android&logoColor=0A1B3D"></a>
+</p>
+
+<p align="center">
   <a href="LICENSE"><img alt="License Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-0A1B3D"></a>
-  <img alt="Node 20.19+" src="https://img.shields.io/badge/node-20.19%2B-2FE0C2">
-  <img alt="PWA installable" src="https://img.shields.io/badge/PWA-installable-0A1B3D">
-  <img alt="No build step" src="https://img.shields.io/badge/build-none-2FE0C2">
-  <img alt="Languages EN and ID" src="https://img.shields.io/badge/i18n-EN%20%7C%20ID-0A1B3D">
-  <img alt="Android native app" src="https://img.shields.io/badge/Android-native%20app-2FE0C2">
+  <a href="https://github.com/Marcel-Bonifacio/crumina-finance/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/Marcel-Bonifacio/crumina-finance?color=2FE0C2"></a>
+  <img alt="Node 20.19+" src="https://img.shields.io/badge/node-20.19%2B-0A1B3D">
 </p>
 
 ---
 
-Crumina is a personal-finance web app you run yourself. It reads your own bank
-statements and transaction alerts from your mailbox, turns them into one view of
-your accounts, spending and net worth, and keeps the data on your side. There is no
-shared ledger and no analytics in the web app (the Android app's ML Kit OCR reports
-usage metrics to Google; see the privacy page). Sign in with Google, connect any mailbox
-over IMAP, or skip accounts entirely and keep everything on one device.
+Crumina is a personal finance app you run yourself. It reads the bank statements and
+transaction alerts already sitting in your mailbox and turns them into one view of
+your accounts, spending and net worth. Nothing goes into a shared ledger, and the
+web app has no analytics. (The Android app's ML Kit OCR does send
+usage metrics to Google. The privacy page has the details.)
 
-It installs as a Progressive Web App, works offline once it has synced, and is
-available in English and Bahasa Indonesia.
+You can sign in with Google, connect any mailbox over IMAP, or skip accounts and keep
+everything on one device. The web app installs as a PWA, works offline after the first
+sync, and speaks English and Bahasa Indonesia.
 
-A native Android app is also available: download the signed APK from the
-[Releases](https://github.com/Marcel-Bonifacio/crumina-finance/releases) page, or build it
-from the `android/` project.
+The Android app is a signed APK. Tap the button above, or pick a version from
+[Releases](https://github.com/Marcel-Bonifacio/crumina-finance/releases). Android will
+ask you to allow installs from your browser the first time.
 
-> **Status:** beta. The parsing covers a set of bank layouts out of the box and falls
-> back to generic patterns for the rest; see [Supported statements](#supported-statements).
+> Status: beta. A few bank layouts are parsed out of the box and everything else falls
+> back to generic patterns. See [Supported statements](#supported-statements).
 
 ## Contents
 
@@ -52,26 +53,24 @@ from the `android/` project.
 
 ## Features
 
-- Reads Gmail through OAuth, or any mailbox over IMAP. Access is read-only; Crumina
-  never sends, deletes or changes mail.
+- Reads Gmail through OAuth, or any mailbox over IMAP. It only reads: Crumina never
+  sends, deletes or changes mail.
 - Extracts balances and transaction rows from monthly PDF e-statements, and unlocks
   password-protected PDFs with a per-bank password you enter.
-- Turns bank and card notification emails into transactions as they arrive, with a
-  heuristic parser for senders it does not know.
-- Matches alerts against the monthly statement, pairs transfers between your own
-  accounts, and treats a card bill payment as settlement rather than spending, so the
-  same money is not counted twice.
+- Turns bank and card notification emails into transactions as they arrive. Senders
+  it doesn't know go through a heuristic parser.
+- Avoids counting the same money twice: alerts are matched against the monthly
+  statement, transfers between your own accounts are paired, and a card bill payment
+  counts as settlement, not spending.
 - Rolls savings, cards, securities cash and a manually tracked investment portfolio
   into one net worth, with live prices for holdings.
-- Cleans and categorises transactions, with a "Where it goes" breakdown, an Insights
-  view over a date range you choose, and a rough carbon estimate of your spending.
-- Optional receipt OCR runs in the browser with a bundled Tesseract build; the photo
-  never leaves your machine.
-- Local mode needs no account and keeps everything in the browser, useful for trying
-  it or for a single device.
-- A service worker caches the app shell, so the app opens without a connection and
-  syncs again when one returns.
-- The interface language (English or Bahasa Indonesia) can be switched in settings.
+- Categorises transactions, shows where the money goes, and has an Insights view for
+  any date range. There's also a rough carbon estimate of your spending.
+- Receipt OCR runs in the browser with a bundled Tesseract build, so the photo never
+  leaves your machine.
+- Local mode needs no account and keeps everything in the browser.
+- Opens without a connection (a service worker caches the app) and syncs again when
+  you're back online.
 
 ## How it works
 
@@ -106,13 +105,13 @@ Most bank-specific settings live in [`app/lib/banks.js`](app/lib/banks.js): the 
 senders for statements, statement password slots, balance patterns, and the
 domain-to-name map for alerts. The alert sender domains that sync searches are listed
 in `app/api/sync.js`, and the CIMB and Permata alert parsers are in `app/lib/parse.js`.
-[docs/BANK-PARSERS.md](docs/BANK-PARSERS.md) lists the steps to add a bank. For the
-full picture, read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+To add a bank, follow [docs/BANK-PARSERS.md](docs/BANK-PARSERS.md). The rest of the
+design is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Quick start
 
-You need Node 20.19 or newer (Node 22 LTS recommended). The client has no build step, so there is nothing to
-compile.
+You need Node 20.19 or newer (22 LTS works well). There's no build step for the
+client.
 
 ```bash
 git clone https://github.com/Marcel-Bonifacio/crumina-finance.git
@@ -170,15 +169,13 @@ lists each location.
 
 ## Supported statements
 
-Out of the box, Crumina recognises a handful of statement and alert layouts defined in
-the bank registry, and falls back to generic patterns ("closing balance", "amount
-due", and similar) for everything else. Captured amounts are read with a parser that
-handles both `1,234,567.89` and `1.234.567` number styles, so currency formatting does
-not trip it up.
+Crumina knows a handful of statement and alert layouts from the bank registry. For
+everything else it falls back to generic patterns like "closing balance" and "amount
+due". Amounts parse in both `1,234,567.89` and `1.234.567` styles.
 
-Adding an institution's statements means appending one entry to `app/lib/banks.js`:
-the sender address, a password slot if the PDF is protected, and one or more balance
-patterns. No change to the parsing engine is needed. Real-time alerts from a new
+Adding a bank's statements is one entry in `app/lib/banks.js`: the sender address, a
+password slot if the PDF is locked, and one or more balance patterns. The parsing
+engine doesn't change. Real-time alerts from a new
 sender also need its domain in `app/api/sync.js`. The format and a worked example are
 in [docs/BANK-PARSERS.md](docs/BANK-PARSERS.md).
 
@@ -202,20 +199,19 @@ brand/               logo and icon assets
 
 The client is vanilla HTML, CSS and JavaScript with no framework and no bundler. The
 server is plain Node: serverless-style `(req, res)` handlers that also run behind a
-small built-in HTTP server for self-hosting. PDF text extraction uses `pdfjs-dist`,
-IMAP uses `imapflow` and `mailparser`, and receipt OCR uses a bundled build of
-Tesseract that runs in the browser. State persists in the browser; the server keeps no
-transaction database. The Android app is native Kotlin and Jetpack Compose, using
-Retrofit for the same API and ML Kit for on-device receipt OCR.
+small built-in HTTP server when you self-host. PDFs go through `pdfjs-dist`, IMAP
+through `imapflow` and `mailparser`. State lives in the browser, and the server has no
+transaction database.
 
 ## Android app
 
-The native Android client is Kotlin with Jetpack Compose, talking to the same backend
-over the session API. It covers the same ground as the web app: net worth, accounts,
-activity, portfolio with live quotes, statement unlock, insights, budgets, recurring
-payments, goals, a spending trend, and on-device receipt OCR, in English and Bahasa
-Indonesia. CI builds and signs the APK and attaches it to each release. The architecture,
-the authentication flow, and the build and signing steps are in
+[Download the latest APK](https://github.com/Marcel-Bonifacio/crumina-finance/releases/latest/download/crumina.apk)
+(Android 8.0 or newer).
+
+The Android app is Kotlin and Jetpack Compose, and it talks to the same backend as the
+web app. It has the same features, including statement unlock, budgets, recurring
+payments, goals and receipt OCR (ML Kit, on the device). Every `v*` tag makes CI build,
+sign and publish a new APK. Auth flow, build and signing steps are in
 [docs/ANDROID.md](docs/ANDROID.md).
 
 ## Documentation
@@ -233,28 +229,26 @@ the authentication flow, and the build and signing steps are in
 
 ## Security and privacy
 
-Crumina asks for read-only mailbox access and never writes to your
-mailbox. Google refresh tokens, IMAP credentials and statement passwords are encrypted at
-rest with AES-256-GCM; sessions are signed, `HttpOnly` cookies. The server applies a
-strict Content-Security-Policy and keeps no record of your transactions. The full
-threat model and the steps for reporting a vulnerability are in
+Crumina only reads your mailbox. Google refresh tokens, IMAP credentials and statement passwords are encrypted at
+rest with AES-256-GCM, and sessions are signed `HttpOnly` cookies. The server sends a
+strict Content-Security-Policy and keeps no record of your transactions. The threat
+model and how to report a vulnerability are in
 [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Contributing
 
-Contributions are welcome. The project stays small and dependency-light on purpose, so
-read [CONTRIBUTING.md](CONTRIBUTING.md) for the conventions (the client/server split,
-the bank registry, the security rules) before opening a pull request.
+Pull requests are welcome, especially new bank layouts. The project stays small with
+few dependencies on purpose, so please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 
 ## License
 
-Crumina is released under the Apache License 2.0 ([LICENSE](LICENSE)). You may use,
-modify and redistribute it, including as a hosted service, provided you keep the
-license and copyright notices and mark files you changed.
+Apache License 2.0 ([LICENSE](LICENSE)). You can use, change and redistribute
+Crumina, including as a hosted service. Keep the license and copyright notices, and
+mark the files you changed.
 
 ## Third-party software
 
 The on-device OCR in `app/vendor/tesseract/` is tesseract.js 5.1.1 with
 tesseract.js-core and the English and Indonesian trained data, all under the Apache
-License 2.0. These files and the npm and Android dependencies keep their own licenses;
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) lists them.
+License 2.0. They, and the npm and Android dependencies, keep their own licenses. See
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
