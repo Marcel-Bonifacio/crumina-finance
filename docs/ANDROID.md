@@ -297,6 +297,18 @@ existing `app/` (same code as the web deploy) with these set:
   adb shell pm get-app-links id.tirtawijata.crumina   # crumina.tirtawijata.com: verified
   ```
 
+## Local mode
+
+"Use locally, without an account" on the sign-in screen starts the app with no Google account,
+like the web app's local mode. The user can enter a name for greetings. Data stays on the
+phone. The app gets a guest session from `GET /api/guest?client=android` (JSON `{token}`,
+no cookies) and uses it for the public features: exchange rates, stock quotes and PDF
+statement upload. Mail sync and statement unlock are hidden. **Settings → Sign in with Google**
+upgrades to an account and keeps the local data. **Leave local mode** asks first, then clears
+the phone's data.
+
+Both modes have **Settings → Display name**, which overrides the Google first name in greetings.
+
 ## Updates
 
 The app updates itself from GitHub Releases, since it is not distributed through Play:

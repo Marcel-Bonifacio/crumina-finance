@@ -2,7 +2,13 @@ package id.tirtawijata.crumina.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -40,8 +47,9 @@ import id.tirtawijata.crumina.data.Repo
 
 /** Sign-in screen, matching app/login.html: navy gradient, logo, white Google pill. */
 @Composable
-fun LoginScreen(expired: Boolean, onLogin: () -> Unit) {
+fun LoginScreen(expired: Boolean, onLogin: () -> Unit, onLocal: (String?) -> Unit = {}) {
     val r = Repo
+    var askName by remember { mutableStateOf(false) }
     StatusBarIcons(lightBackground = false)
     Box(
         Modifier.fillMaxSize()
@@ -79,8 +87,37 @@ fun LoginScreen(expired: Boolean, onLogin: () -> Unit) {
                 Spacer(Modifier.width(12.dp))
                 Text(r.t("login_google"), color = Color(0xFF1F1F1F), fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
+            // Divider and outlined "use locally" pill, as on app/login.html (.ordiv, .g2).
+            Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f).height(1.dp).background(Color.White.copy(alpha = 0.25f)))
+                Text(r.t("or").uppercase(), color = Color.White.copy(alpha = 0.55f), fontSize = 11.sp, letterSpacing = 1.sp, modifier = Modifier.padding(horizontal = 10.dp))
+                Box(Modifier.weight(1f).height(1.dp).background(Color.White.copy(alpha = 0.25f)))
+            }
+            Box(
+                Modifier.fillMaxWidth().clip(CircleShape).border(1.dp, Color.White.copy(alpha = 0.28f), CircleShape)
+                    .clickable { askName = true }.padding(vertical = 14.dp),
+                contentAlignment = Alignment.Center
+            ) { Text(r.t("local_btn"), color = Color.White.copy(alpha = 0.9f), fontSize = 14.sp, fontWeight = FontWeight.Bold) }
             Spacer(Modifier.height(18.dp))
             Text(r.t("login_fine"), color = Color.White.copy(alpha = 0.55f), fontSize = 11.sp, textAlign = TextAlign.Center, lineHeight = 16.sp)
         }
+    }
+    if (askName) {
+        var name by remember { mutableStateOf("") }
+        val focus = remember { androidx.compose.ui.focus.FocusRequester() }
+        androidx.compose.runtime.LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+        CrDialog(
+            onDismissRequest = { askName = false },
+            title = { Text(r.t("local_title")) },
+            text = {
+                Column {
+                    Muted(r.t("local_body"), 13.sp)
+                    Spacer(Modifier.height(10.dp))
+                    CrField(name, { name = it.take(40) }, Modifier.focusRequester(focus), label = { Text(r.t("your_name")) })
+                }
+            },
+            confirmButton = { TextButton(onClick = { askName = false; onLocal(name) }) { Text(r.t("start")) } },
+            dismissButton = { TextButton(onClick = { askName = false }) { Text(r.t("cancel")) } }
+        )
     }
 }
