@@ -21,6 +21,7 @@ import id.tirtawijata.crumina.BuildConfig
 import id.tirtawijata.crumina.data.AuthCodeReq
 import id.tirtawijata.crumina.data.Net
 import id.tirtawijata.crumina.data.Repo
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -39,6 +40,23 @@ object GoogleSignIn {
 
     var busy by mutableStateOf(false)
     var error by mutableStateOf<String?>(null)
+    /** Finished sign-in waiting for MainActivity to apply it (survives activity recreation). */
+    var result by mutableStateOf<AuthTokens?>(null)
+    /** GIS unavailable (no Play services, no Google account, wrong signing key): use the browser flow. */
+    var needsFallback by mutableStateOf(false)
+
+    // Not tied to an Activity: rotating the phone on Google's consent screen recreates MainActivity,
+    // and the sign-in must carry on and deliver its result to the new instance.
+    private val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Main.immediate)
+
+    fun start(activity: Activity, consent: ActivityResultLauncher<IntentSenderRequest>) {
+        if (busy) return
+        scope.launch {
+            try { signIn(activity, consent)?.let { result = it } }
+            catch (e: kotlin.coroutines.cancellation.CancellationException) { throw e }
+            catch (e: Exception) { needsFallback = true }
+        }
+    }
 
     private var pending: ((AuthorizationResult?) -> Unit)? = null
 
@@ -50,7 +68,7 @@ object GoogleSignIn {
     }
 
     /** Returns the tokens, or null when the user cancelled. Throws when GIS is unavailable (caller falls back). */
-    suspend fun signIn(activity: Activity, consent: ActivityResultLauncher<IntentSenderRequest>): AuthTokens? {
+    private suspend fun signIn(activity: Activity, consent: ActivityResultLauncher<IntentSenderRequest>): AuthTokens? {
         busy = true; error = null
         try {
             // 1. Account picker. autoSelect off: the user always sees which account is used.

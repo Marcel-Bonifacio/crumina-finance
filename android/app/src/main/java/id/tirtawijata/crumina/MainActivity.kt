@@ -8,9 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.lifecycle.lifecycleScope
 import id.tirtawijata.crumina.auth.GoogleSignIn
-import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateOf
 import id.tirtawijata.crumina.auth.AuthManager
 import id.tirtawijata.crumina.data.Repo
@@ -35,6 +33,9 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) handleIntent(intent)
         setContent {
             CruminaTheme {
+                // Results of GoogleSignIn, which may finish after this Activity was recreated.
+                androidx.compose.runtime.LaunchedEffect(GoogleSignIn.result) { GoogleSignIn.result?.let { GoogleSignIn.result = null; applyTokens(it) } }
+                androidx.compose.runtime.LaunchedEffect(GoogleSignIn.needsFallback) { if (GoogleSignIn.needsFallback) { GoogleSignIn.needsFallback = false; AuthManager.login(this@MainActivity) } }
                 id.tirtawijata.crumina.ui.UpdatePrompt()
                 if (loggedIn.value && !Repo.sessionExpired) {
                     AppScaffold(onLogout = { Repo.logout(); loggedIn.value = false })
@@ -70,15 +71,7 @@ class MainActivity : ComponentActivity() {
     }
 
     /** Sign in with Google Identity Services; the browser flow is the fallback (no Play services, no account). */
-    fun startGoogleSignIn() {
-        if (GoogleSignIn.busy) return
-        lifecycleScope.launch {
-            try {
-                GoogleSignIn.signIn(this@MainActivity, consentLauncher)?.let { applyTokens(it) }
-            } catch (e: kotlin.coroutines.cancellation.CancellationException) { throw e
-            } catch (e: Exception) { AuthManager.login(this@MainActivity) }
-        }
-    }
+    fun startGoogleSignIn() = GoogleSignIn.start(this, consentLauncher)
 
     private fun applyTokens(tokens: id.tirtawijata.crumina.auth.AuthTokens) {
         val profileJson = tokens.profile?.let { p ->

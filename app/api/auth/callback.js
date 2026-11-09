@@ -32,9 +32,10 @@ async function exchangePost(req, res){
   if (client === 'android') {
     return json(res, 200, { ok:true, t: sign(info.email), p: prof, rt: tok.refresh_token ? encrypt(tok.refresh_token) : null });
   }
-  // A popup sign-in only returns a refresh token on first consent. Without one (a new browser) mail sync
-  // would fail, so send the browser through the redirect flow, which asks for consent and returns one.
-  if (!tok.refresh_token && !getCookie(req, 'tally_rt')) return json(res, 200, { ok:false, consent:true });
+  // A popup sign-in only returns a refresh token on first consent. Without one, send the browser through
+  // the redirect flow, which asks for consent and returns one. Never fall back to an existing tally_rt
+  // cookie: it may belong to a different Google account that used this browser before.
+  if (!tok.refresh_token) return json(res, 200, { ok:false, consent:true });
   const cookies = [ cookie('tally_session', sign(info.email), 30*86400), cookie('tally_prof', prof, 30*86400) ];
   if (tok.refresh_token) cookies.push(cookie('tally_rt', encrypt(tok.refresh_token), 30*86400));
   res.setHeader('Set-Cookie', cookies);
