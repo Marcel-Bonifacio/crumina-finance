@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
   if (!rateLimit(req, res, { max: 15 })) return;
   let mbox = null;
   try {
-    mbox = await getMailbox(req);
+    mbox = await getMailbox(req, email);
     if (!mbox) { res.statusCode = 400; return res.end('Please sign in again.'); }
     const refs = await mbox.search(BANK_SPEC);
     const raw = [];

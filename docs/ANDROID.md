@@ -66,6 +66,16 @@ Google matches the app to the **Android OAuth client** in Google Cloud by packag
 below. Phones without Google Play services or without a Google account also use the browser
 flow. Cancelling the picker or the consent screen does nothing.
 
+### Email sign-in (IMAP)
+
+"Sign in with email password" on the sign-in screen signs in with an email address and an app
+password from the user's provider (Gmail, iCloud, Yahoo and the other built-in providers), as on
+the web. It does not use Google OAuth, so there is no "unverified app" screen and no 7-day expiry.
+The app posts to `POST /api/guest?client=android`; the server checks the login over IMAP and
+returns the session plus the credentials encrypted with its own key. The app keeps those in its
+encrypted store and sends them as `X-Cr-Imap` on sync and statement calls. Signing in with Google
+later replaces them (and the reverse).
+
 ### Browser flow (fallback)
 
 The web app signs in with Google OAuth and the server sets `HttpOnly` cookies. A native

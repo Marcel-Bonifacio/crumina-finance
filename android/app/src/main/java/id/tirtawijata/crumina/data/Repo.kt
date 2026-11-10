@@ -63,6 +63,7 @@ object Repo {
         secure = SecureStore(context.applicationContext)
         mainCcy = store.mainCcy; lang = store.lang; hideAmounts = store.hideAmounts; theme = store.theme
         localMode = store.localMode; displayName = store.displayName
+        imapMode = secure.imapCreds != null
         accounts = store.accounts; holdings = store.holdings
         manualTx = store.manualTx; uploadedAccounts = store.uploadedAccounts
         store.profileJson?.let { profile = runCatching { Gson().fromJson(it, Profile::class.java) }.getOrNull() }
@@ -130,8 +131,17 @@ object Repo {
         // Signing in with Google ends local mode; the local data stays and joins the account.
         if (localMode) { localMode = false; store.localMode = false }
         secure.session = token
-        if (refreshToken != null) secure.refreshToken = refreshToken
+        // Google sign-in: the mailbox is Gmail through OAuth, so drop any IMAP credentials.
+        if (refreshToken != null) { secure.refreshToken = refreshToken; secure.imapCreds = null; imapMode = false }
     }
+
+    /** Email (IMAP) sign-in: the mailbox is read with the app password, so drop any Google refresh token. */
+    fun setImap(creds: String) {
+        secure.imapCreds = creds; secure.refreshToken = null; imapMode = true
+    }
+
+    /** Signed in with an email app password (IMAP) rather than Google. */
+    var imapMode by mutableStateOf(false)
 
     fun saveProfile(json: String) {
         store.profileJson = json
@@ -160,8 +170,8 @@ object Repo {
                     profile = Profile(email = p.email ?: old?.email, name = p.name?.takeIf { it.isNotBlank() } ?: old?.name, picture = p.picture?.takeIf { it.isNotBlank() } ?: old?.picture)
                 }
                 // Keep what we had when a call fails (timeout, 429, offline) instead of blanking it.
-                quiet { api.sync(secure.refreshToken).data?.transactions }?.let { transactions = it }
-                quiet { api.statements(secure.refreshToken, pwHeader()).accounts }?.let { stmtAccounts = it.filter { a -> a.error == null } }
+                quiet { api.sync(secure.refreshToken, secure.imapCreds).data?.transactions }?.let { transactions = it }
+                quiet { api.statements(secure.refreshToken, pwHeader(), secure.imapCreds).accounts }?.let { stmtAccounts = it.filter { a -> a.error == null } }
             }
             if (holdings.isNotEmpty()) {
                 val quotes = holdings.map { it.symbol }.distinct().associateWith { sym -> quiet { api.quote(sym) } }
@@ -188,7 +198,7 @@ object Repo {
     }
 
     suspend fun discover() {
-        discoveredBanks = runCatching { Net.api(secure).discoverBanks(1, secure.refreshToken).banks }.getOrNull() ?: emptyList()
+        discoveredBanks = runCatching { Net.api(secure).discoverBanks(1, secure.refreshToken, secure.imapCreds).banks }.getOrNull() ?: emptyList()
     }
 
     fun setStatementPassword(bank: String, pw: String) {
@@ -373,7 +383,7 @@ object Repo {
         budget = Budget(); goals = emptyList()
         mainCcy = "IDR"; lang = "en"; hideAmounts = false
         fx = emptyMap(); fxBase = ""
-        localMode = false; displayName = null
+        localMode = false; displayName = null; imapMode = false
         store.theme = theme // a display preference, not personal data: keep it across sign-out
     }
 }

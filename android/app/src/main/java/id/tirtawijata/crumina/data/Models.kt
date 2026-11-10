@@ -6,6 +6,9 @@ import com.google.gson.annotations.SerializedName
 data class Profile(val email: String? = null, val name: String? = null, val picture: String? = null)
 data class DataResponse(val profile: Profile? = null)
 data class GuestResponse(val token: String? = null)
+data class ImapProvider(val id: String = "", val name: String = "", val domains: List<String>? = null, val help: String? = null)
+data class ConfigResponse(val imap: Boolean = false, val imapCustom: Boolean = false, val providers: List<ImapProvider>? = null, val google: Boolean = false)
+data class ImapLoginResponse(val ok: Boolean = false, val t: String? = null, val p: String? = null, val imap: String? = null, val error: String? = null)
 data class AuthCodeReq(val code: String, val client: String = "android")
 data class AuthCodeResp(val ok: Boolean = false, val t: String? = null, val p: String? = null, val rt: String? = null, val error: String? = null)
 

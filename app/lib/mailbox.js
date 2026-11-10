@@ -114,10 +114,12 @@ function imapMailbox(creds){
 }
 
 function imapEnabled(){ return !!process.env.IMAP_ENABLED; }
-async function getMailbox(req){
+// email: the signed-in session's address. Stored IMAP credentials (cookie on the web, X-Cr-Imap header
+// from the app) are only used for that same address.
+async function getMailbox(req, email){
   if(imapEnabled()){
-    var enc=getCookie(req,'cr_imap');
-    if(enc){ try{ var c=JSON.parse(decrypt(enc)); if(c&&c.host&&c.user&&c.pass) return imapMailbox(c); }catch(e){} }
+    var enc=getCookie(req,'cr_imap') || (req.headers && req.headers['x-cr-imap']);
+    if(enc){ try{ var c=JSON.parse(decrypt(String(enc))); if(c&&c.host&&c.user&&c.pass&&(!email||String(c.user).toLowerCase()===String(email).toLowerCase())) return imapMailbox(c); }catch(e){} }
   }
   var rt=getCookie(req,'tally_rt') || (req.headers && req.headers['x-cr-rt']);
   if(rt){ try{ var at=await require('./google').refresh(decrypt(rt)); return gmailMailbox(at); }catch(e){ return null; } }

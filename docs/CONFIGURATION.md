@@ -48,24 +48,28 @@ key's SHA-1, and set `GOOGLE_WEB_CLIENT_ID` in `android/app/build.gradle.kts`
 to the web client's ID. Until the app passes Google's verification you can add up
 to 100 test users. Crumina only ever requests read-only Gmail access.
 
-## IMAP sign-in (optional, self-host)
+## IMAP sign-in (email + app password)
 
 | Variable | Effect |
 |---|---|
-| `IMAP_ENABLED` | Set to `1` to show the "or connect your email" options (Outlook.com, iCloud Mail, or any other IMAP server) on the login page. |
+| `IMAP_ENABLED` | Set to `1` to offer "Sign in with email" on the login page and in the Android app. |
+| `IMAP_ALLOW_CUSTOM` | Set to `1` to also allow any IMAP server ("Other IMAP server"). Without it, only the built-in providers in `app/lib/imapProviders.js` are allowed: Gmail, iCloud, Yahoo, AOL, Zoho, Fastmail, GMX, Yandex (Outlook.com no longer accepts app passwords for IMAP). |
 | `IMAP_ALLOW_PRIVATE` | Set to `1` to allow IMAP hosts that resolve to private, loopback or link-local addresses (a mail server on your LAN). Any other value leaves it off. |
 
-With IMAP enabled, anyone using your instance can sign in with Gmail, Outlook /
-Office 365, iCloud, or any IMAP server using an app-specific password. No Google
-OAuth is required. Credentials are validated on connect, then stored AES-256-GCM
-encrypted in an `HttpOnly` cookie; there is no credentials database. The cookie
-needs HTTPS (or `localhost`) to be accepted. The managed deployment does not enable
-this; it is meant for instances you run yourself.
+Users sign in with their email address and an **app password** from their provider
+(their normal password won't work; Gmail needs 2-Step Verification on to create one).
+The provider is picked from the address. No Google OAuth is involved, so there is no
+"unverified app" screen and no 7-day token expiry. Credentials are checked on connect
+(spaces in app passwords like `abcd efgh ijkl mnop` are tried with and without), then
+encrypted with AES-256-GCM: on the web in an `HttpOnly` cookie, in the Android app in its
+encrypted store, sent back as the `X-Cr-Imap` header. The server only uses them for the
+session with the same email address. There is no credentials database.
 
-A custom IMAP server must accept TLS on port 993; the sign-in refuses any other port.
-Because the sign-in form is reachable before login, it also refuses hosts that resolve
-to private, loopback, link-local or reserved addresses unless `IMAP_ALLOW_PRIVATE` is
-set. Both cases send the user back to `/login?imap=host`.
+The managed deployment enables IMAP with the built-in providers only. A public, pre-login
+endpoint that connects to any host would let anyone use the server to probe or
+brute-force other mail servers; keep `IMAP_ALLOW_CUSTOM` for instances you run for yourself.
+A custom server must accept TLS on port 993 and must not resolve to a private address
+(unless `IMAP_ALLOW_PRIVATE` is set); otherwise the user is sent back to `/login?imap=host`.
 
 ## Runtime (optional)
 

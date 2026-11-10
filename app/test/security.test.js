@@ -24,6 +24,14 @@ async function eq(label, got, want) {
   await eq('IMAP_ALLOW_PRIVATE=1 lets a LAN host through', resolvePublic('192.168.1.10'), '192.168.1.10');
   delete process.env.IMAP_ALLOW_PRIVATE;
 
+  // --- IMAP providers: the address picks the provider; unknown domains need IMAP_ALLOW_CUSTOM
+  const { providerForEmail, customAllowed } = require('../lib/imapProviders');
+  await eq('gmail.com -> gmail', providerForEmail('Me@Gmail.com'), 'gmail');
+  await eq('yahoo.co.id -> yahoo', providerForEmail('a@yahoo.co.id'), 'yahoo');
+  await eq('unknown domain -> null', providerForEmail('a@bank.example'), null);
+  delete process.env.IMAP_ALLOW_CUSTOM;
+  await eq('custom hosts off by default', customAllowed(), false);
+
   // --- spoofed(): forged bank mail is dropped, real mail is kept
   const F = 'BCA <alerts@bca.co.id>';
   await eq('no Authentication-Results: kept', spoofed('', F), false);
