@@ -59,7 +59,7 @@ fun SettingsScreen(onLogout: () -> Unit, onSync: () -> Unit) {
             Spacer(Modifier.width(14.dp))
             Column {
                 Ink(r.displayName ?: r.profile?.name ?: r.firstName ?: "Crumina", 16.sp, FontWeight.Bold)
-                Muted(if (r.localMode) r.t("local_mode") else r.profile?.email ?: r.t("google_acct"), 12.sp)
+                Muted(if (r.localMode) r.t("local_mode") else (r.profile?.email ?: "") + if (r.imapMode) " · " + r.t("imap_acct") else "", 12.sp)
             }
         }
         SettingRow(r.t("display_name"), r.displayName ?: r.firstName ?: r.t("display_name_sub"), onClick = { editName = true }) { Chevron() }

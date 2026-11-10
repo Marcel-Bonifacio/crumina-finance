@@ -1,8 +1,8 @@
 (function(){
   function $(id){ return document.getElementById(id); }
-  var HEAD={outlook:'Outlook.com (IMAP) · use an app password',icloud:'iCloud Mail (IMAP) · use an app-specific password',custom:'Any IMAP server · enter host, port + app password',gmail:'Gmail · use an app password'};
+  var PROVIDERS=[], CUSTOM=false;
   fetch('/api/guest?config=1',{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(c){
-    if(c&&c.imap){ var w=$('imapWrap'); if(w) w.style.display='block'; }
+    if(c&&c.imap){ var w=$('imapWrap'); if(w) w.style.display='block'; PROVIDERS=c.providers||[]; CUSTOM=!!c.imapCustom; fillProviders(); }
     if(c&&c.google===false){ var g=$('gBtn'); if(g) g.style.display='none'; var od=$('orDiv'); if(od) od.style.display='none'; }
     if(c&&c.google&&c.clientId) loadGis(c.clientId);
   }).catch(function(){});
@@ -36,12 +36,24 @@
       .catch(function(){ fallback(); });
   }
   function showErr(m){ var e=$('gErr'); if(!e){ e=document.createElement('p'); e.id='gErr'; e.style.cssText='color:#FFC9D4;margin:12px 0 0;opacity:1'; var g=$('gBtn'); if(g&&g.parentNode) g.parentNode.insertBefore(e,g.nextSibling); } e.textContent=m; }
-  function openIm(prov){
-    var p=$('imProv'); if(p) p.value=prov;
-    var cu=$('imCustom'); if(cu) cu.style.display=(prov==='custom')?'block':'none';
-    var h=$('imHead'); if(h) h.textContent=HEAD[prov]||'';
+  // Provider list comes from the server (/api/guest?config=1); the hosted service only allows these.
+  function fillProviders(){
+    var sel=$('imProv'); if(!sel) return; sel.textContent='';
+    PROVIDERS.forEach(function(p){ var o=document.createElement('option'); o.value=p.id; o.textContent=p.name; sel.appendChild(o); });
+    if(CUSTOM){ var o=document.createElement('option'); o.value='custom'; o.textContent='Other IMAP server'; sel.appendChild(o); }
+    sel.onchange=syncProv;
+    var em=$('imEmail'); if(em) em.oninput=function(){ var d=(em.value.split('@')[1]||'').toLowerCase(); var hit=PROVIDERS.find(function(p){return p.domains.indexOf(d)>=0;}); if(hit){ sel.value=hit.id; syncProv(); } };
+    syncProv();
+  }
+  function syncProv(){
+    var sel=$('imProv'), v=sel?sel.value:'', p=PROVIDERS.find(function(x){return x.id===v;});
+    var cu=$('imCustom'); if(cu) cu.style.display=(v==='custom')?'block':'none';
+    var h=$('imHelp'); if(!h) return; h.textContent='';
+    if(p&&p.help){ var a=document.createElement('a'); a.href=p.help; a.target='_blank'; a.rel='noopener'; a.style.cssText='color:#7fe3cf;text-decoration:underline'; a.textContent='How to create a '+p.name+' app password'; h.appendChild(a); }
+  }
+  function openIm(){
     var f=$('imapForm'); if(f) f.style.display='block';
-    var em=document.querySelector('#imapForm input[name=email]'); if(em){ try{ em.focus(); }catch(_){} }
+    var em=$('imEmail'); if(em){ try{ em.focus(); }catch(_){} }
   }
   document.addEventListener('click',function(e){
     var gb=e.target.closest&&e.target.closest('#gBtn');
@@ -51,5 +63,5 @@
   });
   var ec=new URLSearchParams(location.search).get('imap');
   if(ec){ var w=$('imapWrap'); if(w) w.style.display='block'; var f=$('imapForm'); if(f) f.style.display='block';
-    var er=$('imapErr'); if(er){ er.textContent = ec==='missing'?'Please fill in all fields.' : ec==='auth'?"Couldn't sign in. Check the email, app password, and server.":ec==='host'?"This mail server isn't allowed here. Use the provider's IMAP host on port 993.":'Connection error. Please try again.'; er.style.display='block'; } }
+    var er=$('imapErr'); if(er){ er.textContent = ec==='missing'?'Please fill in all fields.' : ec==='auth'?"Couldn't sign in. Check the email and app password (your normal password won't work; Gmail needs 2-Step Verification on to create one).":ec==='host'?"This mail server isn't allowed here. Use the provider's IMAP host on port 993.":ec==='provider'?"That email provider isn't supported here yet. Pick one from the list.":'Connection error. Please try again.'; er.style.display='block'; } }
 })();

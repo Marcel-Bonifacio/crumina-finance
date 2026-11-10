@@ -25,6 +25,11 @@ class SecureStore(context: Context) {
         // commit(), not apply(): the process may be killed while the Custom Tab is open.
         set(value) { prefs.edit().apply { if (value == null) remove("login_state") else putString("login_state", value) }.commit() }
 
+    /** Server-encrypted IMAP credentials (email + app password) for email sign-in; sent as X-Cr-Imap. */
+    var imapCreds: String?
+        get() = prefs.getString("imap", null)
+        set(value) = prefs.edit().apply { if (value == null) remove("imap") else putString("imap", value) }.apply()
+
     val isLoggedIn: Boolean get() = session != null
 
     fun clear() = prefs.edit().clear().apply()

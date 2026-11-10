@@ -43,12 +43,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.tirtawijata.crumina.R
+import id.tirtawijata.crumina.auth.AuthTokens
 import id.tirtawijata.crumina.data.Repo
 
 /** Sign-in screen, matching app/login.html: navy gradient, logo, white Google pill. */
 @Composable
-fun LoginScreen(expired: Boolean, onLogin: () -> Unit, onLocal: (String?) -> Unit = {}) {
+fun LoginScreen(expired: Boolean, onLogin: () -> Unit, onLocal: (String?) -> Unit = {}, onImap: ((AuthTokens, String) -> Unit)? = null) {
     val r = Repo
+    var askImap by remember { mutableStateOf(false) }
     var askName by remember { mutableStateOf(false) }
     StatusBarIcons(lightBackground = false)
     Box(
@@ -87,6 +89,14 @@ fun LoginScreen(expired: Boolean, onLogin: () -> Unit, onLocal: (String?) -> Uni
                 Spacer(Modifier.width(12.dp))
                 Text(if (id.tirtawijata.crumina.auth.GoogleSignIn.busy) r.t("signing_in") else r.t("login_google"), color = Color(0xFF1F1F1F), fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
+            if (onImap != null) {
+                Spacer(Modifier.height(10.dp))
+                Box(
+                    Modifier.fillMaxWidth().clip(CircleShape).background(Color.White.copy(alpha = 0.12f))
+                        .clickable { askImap = true }.padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) { Text(r.t("imap_btn"), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold) }
+            }
             id.tirtawijata.crumina.auth.GoogleSignIn.error?.let {
                 Spacer(Modifier.height(12.dp))
                 Text(it, color = Color(0xFFFFC9D4), fontSize = 13.sp, textAlign = TextAlign.Center)
@@ -124,4 +134,5 @@ fun LoginScreen(expired: Boolean, onLogin: () -> Unit, onLocal: (String?) -> Uni
             dismissButton = { TextButton(onClick = { askName = false }) { Text(r.t("cancel")) } }
         )
     }
+    if (askImap && onImap != null) ImapSignInDialog(onDismiss = { askImap = false }, onSignedIn = { t, c -> askImap = false; onImap(t, c) })
 }

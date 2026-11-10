@@ -41,7 +41,8 @@ class MainActivity : ComponentActivity() {
                     AppScaffold(onLogout = { Repo.logout(); loggedIn.value = false })
                 } else {
                     LoginScreen(expired = Repo.sessionExpired, onLogin = { startGoogleSignIn() },
-                        onLocal = { name -> Repo.startLocal(name); loggedIn.value = true })
+                        onLocal = { name -> Repo.startLocal(name); loggedIn.value = true },
+                        onImap = { tokens, creds -> applyTokens(tokens); Repo.setImap(creds) })
                 }
             }
         }

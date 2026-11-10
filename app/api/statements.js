@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
   let mbox = null;
   try {
     const isDiscover = /[?&]discover=1(?:&|$)/.test(req.url || '');
-    mbox = await getMailbox(req);
+    mbox = await getMailbox(req, email);
     if (!mbox) { if (isDiscover) return res.end(JSON.stringify({ ok: true, banks: [] })); res.statusCode = 400; return res.end('{"error":"sign in again"}'); }
     if (isDiscover) { const banks = await discoverBanks(mbox); return res.end(JSON.stringify({ ok: true, banks })); }
     let pwMap = {};
