@@ -44,6 +44,9 @@ module.exports = async (req, res) => {
       if (PROVIDERS[provider]) { host = PROVIDERS[provider].host; port = 993; }
       else if (!customAllowed()) return fail('provider'); // hosted: known providers only
       if (!email || !pass || !host || email.length > 254 || pass.length > 256) return fail('missing');
+      // Also limit attempts per address, so the endpoint can't be used to guess someone's app password
+      // from many IPs (per instance; on serverless a shared limiter such as the Vercel Firewall is stronger).
+      if (!rateLimit(req, res, { name: 'imap-acct:' + email.toLowerCase(), max: 5, windowMs: 15 * 60000, key: 'acct' })) return;
       if (!port || isNaN(port)) port = 993;
       // Implicit TLS (secure: true) only works on 993, so that is the only port we connect to.
       const addr = port === 993 ? await resolvePublic(host) : null;

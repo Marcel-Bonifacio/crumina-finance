@@ -16,7 +16,8 @@ function clientIp(req) {
 function route(req) { let p = String(req.url || '').split('?')[0]; try { p = decodeURIComponent(p); } catch (e) {} return p.replace(/\/+/g, '/').replace(/\/+$/, '').toLowerCase(); }
 function rateLimit(req, res, opts) {
   const max = (opts && opts.max) || 20, windowMs = (opts && opts.windowMs) || 60000;
-  const key = ((opts && opts.name) || route(req)) + '|' + clientIp(req);
+  // opts.key === 'acct': one counter per name for everyone (e.g. per email address), not per client IP.
+  const key = ((opts && opts.name) || route(req)) + '|' + (opts && opts.key === 'acct' ? '*' : clientIp(req));
   const now = Date.now(); const e = hits.get(key);
   if (!e || now > e.reset) {
     hits.delete(key); // re-insert, so Map order follows reset time

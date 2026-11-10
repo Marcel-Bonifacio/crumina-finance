@@ -32,8 +32,7 @@ import kotlinx.coroutines.launch
 private val FALLBACK = listOf(
     ImapProvider("gmail", "Gmail", listOf("gmail.com", "googlemail.com"), "https://myaccount.google.com/apppasswords"),
     ImapProvider("icloud", "iCloud Mail", listOf("icloud.com", "me.com", "mac.com"), "https://support.apple.com/102654"),
-    ImapProvider("yahoo", "Yahoo Mail", listOf("yahoo.com", "yahoo.co.id", "ymail.com"), "https://help.yahoo.com/kb/SLN15241.html"),
-    ImapProvider("outlook", "Outlook / Hotmail", listOf("outlook.com", "hotmail.com", "live.com"), "https://account.live.com/proofs/AppPassword")
+    ImapProvider("yahoo", "Yahoo Mail", listOf("yahoo.com", "yahoo.co.id", "ymail.com"), "https://help.yahoo.com/kb/SLN15241.html")
 )
 
 /**
@@ -51,7 +50,7 @@ fun ImapSignInDialog(onDismiss: () -> Unit, onSignedIn: (AuthTokens, String) -> 
     var providers by remember { mutableStateOf(FALLBACK) }
     var email by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
-    var provider by remember { mutableStateOf("gmail") }
+    var provider by remember { mutableStateOf("") } // chosen from the address, or by the user
     var busy by remember { mutableStateOf(false) }
     var err by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
@@ -59,7 +58,11 @@ fun ImapSignInDialog(onDismiss: () -> Unit, onSignedIn: (AuthTokens, String) -> 
     }
     // Pick the provider from the address as it's typed (gmail.com -> Gmail).
     val domain = email.substringAfter('@', "").lowercase()
-    LaunchedEffect(domain, providers) { providers.firstOrNull { p -> p.domains?.contains(domain) == true }?.let { provider = it.id } }
+    LaunchedEffect(domain, providers) {
+        val hit = providers.firstOrNull { p -> p.domains?.contains(domain) == true }
+        // Known domain: pick it. Unknown domain: no silent default, the user picks a provider.
+        provider = hit?.id ?: if (domain.contains('.')) "" else provider
+    }
     val current = providers.firstOrNull { it.id == provider }
 
     CrDialog(
@@ -87,7 +90,7 @@ fun ImapSignInDialog(onDismiss: () -> Unit, onSignedIn: (AuthTokens, String) -> 
             }
         },
         confirmButton = {
-            TextButton(enabled = !busy && email.contains('@') && pass.isNotBlank(), onClick = {
+            TextButton(enabled = !busy && email.contains('@') && pass.isNotBlank() && provider.isNotEmpty(), onClick = {
                 busy = true; err = null
                 scope.launch {
                     val resp = runCatching { Net.api(r.secureStore()).imapLogin(email, pass, provider) }.getOrNull()

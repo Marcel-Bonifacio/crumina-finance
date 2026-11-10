@@ -1,10 +1,10 @@
 // IMAP providers Crumina can sign in to with an app password, and how an email address maps to one.
+// Outlook.com / Hotmail is not listed: Microsoft no longer accepts app passwords for IMAP there (OAuth only).
 // The hosted service only connects to these; IMAP_ALLOW_CUSTOM=1 (self-host) also allows any public
 // IMAP host on port 993. Keeping the hosted list closed stops the pre-auth sign-in endpoint from being
 // used to probe or brute-force arbitrary mail servers through our IPs.
 const PROVIDERS = {
   gmail:    { name: 'Gmail',              host: 'imap.gmail.com',          domains: ['gmail.com', 'googlemail.com'], help: 'https://myaccount.google.com/apppasswords' },
-  outlook:  { name: 'Outlook / Hotmail',  host: 'outlook.office365.com',   domains: ['outlook.com', 'hotmail.com', 'live.com', 'msn.com'], help: 'https://account.live.com/proofs/AppPassword' },
   icloud:   { name: 'iCloud Mail',        host: 'imap.mail.me.com',        domains: ['icloud.com', 'me.com', 'mac.com'], help: 'https://support.apple.com/102654' },
   yahoo:    { name: 'Yahoo Mail',         host: 'imap.mail.yahoo.com',     domains: ['yahoo.com', 'yahoo.co.id', 'ymail.com', 'rocketmail.com'], help: 'https://help.yahoo.com/kb/SLN15241.html' },
   aol:      { name: 'AOL Mail',           host: 'imap.aol.com',            domains: ['aol.com'], help: 'https://help.aol.com/articles/Create-and-manage-app-password' },

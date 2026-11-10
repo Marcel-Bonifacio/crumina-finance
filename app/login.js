@@ -39,10 +39,12 @@
   // Provider list comes from the server (/api/guest?config=1); the hosted service only allows these.
   function fillProviders(){
     var sel=$('imProv'); if(!sel) return; sel.textContent='';
+    // No silent default: an address we don't recognise must pick its provider explicitly.
+    var ph=document.createElement('option'); ph.value=''; ph.textContent='Choose your email provider'; ph.disabled=true; ph.selected=true; sel.appendChild(ph); sel.required=true;
     PROVIDERS.forEach(function(p){ var o=document.createElement('option'); o.value=p.id; o.textContent=p.name; sel.appendChild(o); });
     if(CUSTOM){ var o=document.createElement('option'); o.value='custom'; o.textContent='Other IMAP server'; sel.appendChild(o); }
     sel.onchange=syncProv;
-    var em=$('imEmail'); if(em) em.oninput=function(){ var d=(em.value.split('@')[1]||'').toLowerCase(); var hit=PROVIDERS.find(function(p){return p.domains.indexOf(d)>=0;}); if(hit){ sel.value=hit.id; syncProv(); } };
+    var em=$('imEmail'); if(em) em.oninput=function(){ var d=(em.value.split('@')[1]||'').toLowerCase(); var hit=PROVIDERS.find(function(p){return p.domains.indexOf(d)>=0;}); if(hit){ sel.value=hit.id; } else if(sel.value&&PROVIDERS.some(function(p){return p.id===sel.value&&p.domains.indexOf(d)<0;})&&d.indexOf('.')>0){ sel.value=''; } syncProv(); };
     syncProv();
   }
   function syncProv(){

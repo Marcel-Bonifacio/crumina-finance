@@ -53,7 +53,7 @@ to 100 test users. Crumina only ever requests read-only Gmail access.
 | Variable | Effect |
 |---|---|
 | `IMAP_ENABLED` | Set to `1` to offer "Sign in with email" on the login page and in the Android app. |
-| `IMAP_ALLOW_CUSTOM` | Set to `1` to also allow any IMAP server ("Other IMAP server"). Without it, only the built-in providers in `app/lib/imapProviders.js` are allowed: Gmail, Outlook / Hotmail, iCloud, Yahoo, AOL, Zoho, Fastmail, GMX, Yandex. |
+| `IMAP_ALLOW_CUSTOM` | Set to `1` to also allow any IMAP server ("Other IMAP server"). Without it, only the built-in providers in `app/lib/imapProviders.js` are allowed: Gmail, iCloud, Yahoo, AOL, Zoho, Fastmail, GMX, Yandex (Outlook.com no longer accepts app passwords for IMAP). |
 | `IMAP_ALLOW_PRIVATE` | Set to `1` to allow IMAP hosts that resolve to private, loopback or link-local addresses (a mail server on your LAN). Any other value leaves it off. |
 
 Users sign in with their email address and an **app password** from their provider
