@@ -70,6 +70,9 @@ fun ImapSignInDialog(onDismiss: () -> Unit, onSignedIn: (AuthTokens, String) -> 
         title = { Text(r.t("imap_title")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
+                // Errors go first: the dialog is tall (provider chips, help link), and a message at the
+                // bottom would be off-screen on a phone, so a failed sign-in looked like nothing happened.
+                err?.let { Ink(it, 13.sp, color = cr.red); Spacer(Modifier.height(10.dp)) }
                 Muted(r.t("imap_body"), 13.sp)
                 Spacer(Modifier.height(10.dp))
                 CrField(email, { email = it.trim().take(254) }, label = { Text(r.t("imap_email")) })
@@ -86,7 +89,6 @@ fun ImapSignInDialog(onDismiss: () -> Unit, onSignedIn: (AuthTokens, String) -> 
                         Text(String.format(r.t("imap_help"), current.name), color = cr.teal, fontSize = 13.sp)
                     }
                 }
-                err?.let { Spacer(Modifier.height(6.dp)); Ink(it, 13.sp, color = cr.red) }
             }
         },
         confirmButton = {
